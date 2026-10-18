@@ -18,7 +18,10 @@ dependencies = [
     "numpy",
     "pandas",
     "tabulate",
-    "duckdb"
+    "duckdb",
+    "streamlit>=1.65.0",
+    "psycopg[binary,pool]>=3.3.6",
+    "python-dotenv>=1.2.4",
 ]
 
 
