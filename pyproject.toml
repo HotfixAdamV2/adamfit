@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+
+[project]
+name = "adamfit"
+version = "0.1.0"
+description = "Adams personal fitness webapp."
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "pyarrow",
+    "numpy",
+    "pandas",
+    "tabulate",
+    "duckdb"
+]
+
+
+[project.scripts]
+
+
+[dependency-groups]
+dev = [
+    "jupyter",
+    "ipykernel",
+]
+
+[tool.uv]
+# Ignore packages released in the last 7 days
+exclude-newer = "1 week"
