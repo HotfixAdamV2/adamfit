@@ -1,5 +1,5 @@
 /*
-    Migration: 000010_create_fx_trg_copy_standard_foods (up)
+    Migration: 000012_create_fx_trg_copy_standard_foods (up)
 
     What:
         Creates the trigger function fx_trg_copy_standard_foods and attaches

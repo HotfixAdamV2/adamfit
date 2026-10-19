@@ -42,7 +42,7 @@ A personal fitness web app. It is also a learning project for agentic developmen
 - Every function and class needs a NumPy-style docstring with type hints (skill: `python-docstrings`).
 - `app.py` is a router using `st.navigation`. New pages must be registered there with `st.Page`. Logged-out users only get the login page.
 - Put SQL in a per-table module (e.g. `weights.py`), not in page files. Pages call those functions.
-- The database stores body measurements in metric units (kg, cm). Convert for display with `units.py`. Food servings are the exception: they use any unit in the `serving_unit` lookup table (g, oz, cup, bar...), and `nutrition.py` converts weights to the user's preferred unit.
+- The database stores body measurements in metric units (kg, cm). Convert for display with `units.py`. Food servings are the exception: they use any unit in the `serving_unit` lookup table (g, oz, cup, bar...), and are always shown in the food's own unit. The user's imperial/metric setting never applies to foods. `nutrition.py` handles the serving and macro maths.
 - Auth: Argon2 hashes via `auth.py`, login state in `st.session_state["user_id"]`, no sign-up page. See `docs/authentication.md`.
 - Delegate Python and Streamlit work to the `ui-developer` agent.
 - Whenever a page is added or changed, write or update its markdown doc in `docs/` (skill: `page-documentation`).

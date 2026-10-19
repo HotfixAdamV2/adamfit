@@ -38,4 +38,3 @@ Pass a dictionary instead of a list to group pages under headings: `{"Me": [prof
 
 ## Used in
 - [App router (`app.py`)](../streamlit_basics.md#multipage-apps-and-the-router)
-- [Home page](../home_page.md)

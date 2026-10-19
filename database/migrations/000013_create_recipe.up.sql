@@ -1,5 +1,5 @@
 /*
-    Migration: 000011_create_recipe (up)
+    Migration: 000013_create_recipe (up)
 
     What:
         Creates the recipe table: a user's named meal (e.g. "Chicken and

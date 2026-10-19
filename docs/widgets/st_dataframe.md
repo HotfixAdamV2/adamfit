@@ -35,4 +35,4 @@ Each entry renames a column and controls how its values are displayed.
 ## Used in
 - [Exercises page](../exercises_page.md)
 - [My Profile page](../profile_page.md)
-- [Nutrition page](../nutrition_page.md): the Total row under each editable table
+- [Nutrition page](../nutrition_page.md): the Total row under a recipe's ingredients table

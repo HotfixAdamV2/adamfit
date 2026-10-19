@@ -1,21 +1,21 @@
 /*
-    Migration: 000015_create_serving_unit (up)
+    Migration: 000007_create_serving_unit (up)
 
     What:
         Creates the serving_unit lookup table: every unit a food's serving
         can be measured in (g, oz, cup, piece, ...).
 
     Why:
-        Allowed units used to be listed in a CHECK constraint on both
-        standard_food and food, so adding a unit meant changing two
-        constraints. With a lookup table, adding a unit is one INSERT.
-        The table also says how to convert weights, so the app can show
-        a 4 oz serving in grams (or 100 g in ounces).
+        standard_food and food (000009, 000011) reference this table with
+        a foreign key, so adding a unit is one INSERT rather than a change
+        to CHECK constraints on two tables. The table also says how to
+        convert weights, so the app can show a 4 oz serving in grams (or
+        100 g in ounces).
 
     Notes:
         - unit_code is a natural primary key (no sequence). It is the value
-          stored in food.serving_unit, so foods stay readable without a
-          join.
+          stored in standard_food.serving_unit and food.serving_unit, so
+          foods stay readable without a join.
         - unit_type is 'mass', 'volume' or 'count'. Mass units have
           grams_per_unit, volume units have ml_per_unit, count units
           (piece, bar, ...) have neither.

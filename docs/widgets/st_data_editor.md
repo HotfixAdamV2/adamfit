@@ -4,7 +4,7 @@ An editable table, like a small spreadsheet. It returns the edited data, and als
 
 ```python
 {
-    "edited_rows": {0: {"amount": 8.0}},   # row position -> changed columns
+    "edited_rows": {0: {"servings": 2.0}}, # row position -> changed columns
     "added_rows": [{"food_name": "My shake", ...}],
     "deleted_rows": [2],                     # row positions
 }
@@ -41,14 +41,14 @@ st.data_editor(
 | Column config | What it does |
 |---------------|--------------|
 | `st.column_config.TextColumn(label, max_chars=, required=, disabled=)` | Text cells |
-| `st.column_config.NumberColumn(label, min_value=, step=, format=, default=, disabled=)` | Number cells. `format="%.1f"` shows one decimal |
+| `st.column_config.NumberColumn(label, min_value=, step=, format=, default=, disabled=)` | Number cells. `format="%.2f"` shows two decimals, `step=0.25` sets the +/- step |
 | `st.column_config.SelectboxColumn(label, options=, format_func=, default=)` | A dropdown in each cell. `format_func` turns stored values (e.g. ids) into labels |
 
 All of them accept `width` (`"small"`, `"medium"`, `"large"` or pixels) and `required` (a new row must fill it in).
 
-## Two ways to save
-- **Straight away**: pass `on_change`. The callback reads the change record and saves it. Then give the editor a new `key` (we add a version number) so it starts fresh with the saved data. Used for the log and recipe ingredients.
-- **On a button**: put the editor in a [form](st_form.md). Edits are only sent when the form's submit button is pressed. Used for the food list.
+## Two ways to batch changes
+- **Stage, then save on a button**: pass `on_change`. The callback reads the change record and copies it into our own "changes" dictionary in `st.session_state`, without touching the database. Then the editor gets a new `key` (we add a version number) so it starts fresh, and the page redraws it from the database rows with the staged changes applied. **Save changes** writes them all in one transaction, **Revert changes** throws them away. Used for the daily log and recipe ingredients, because adding a row happens outside the editor (in the add row above it) and has to be staged in the same place.
+- **In a form**: put the editor in a [form](st_form.md). Edits are only sent when the form's submit button is pressed. Used for the food list.
 
 ## Used in
 - [Nutrition page](../nutrition_page.md)

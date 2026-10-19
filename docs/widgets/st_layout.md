@@ -20,7 +20,7 @@ A box that holds other elements. With `horizontal=True` its contents sit side by
 ```python
 with st.container(horizontal=True, vertical_alignment="bottom"):
     st.selectbox("Food or recipe", ...)
-    st.number_input("Amount (oz)", ..., width=150)
+    st.number_input("Servings", ..., width=150)
     st.button("Add")
 ```
 | Parameter | What it does | Default |
@@ -51,5 +51,6 @@ with st.sidebar:
 
 ## Used in
 - [App router (`app.py`)](../streamlit_basics.md#multipage-apps-and-the-router): sidebar
+- [Home page](../home_page.md): a horizontal container for the macro tiles (inside `ui.macro_tiles`)
 - [My Profile page](../profile_page.md): columns and expanders
-- [Nutrition page](../nutrition_page.md): horizontal containers, columns and the Edit recipe details expander
+- [Nutrition page](../nutrition_page.md): horizontal containers (the filter row, the add row and the Save / Revert row), columns and the Edit recipe details expander

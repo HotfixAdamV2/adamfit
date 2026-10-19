@@ -22,23 +22,20 @@ def get_serving_units() -> pd.DataFrame:
     Returns
     -------
     pd.DataFrame
-        Indexed by ``unit_code`` (e.g. ``"oz"``), with columns ``unit_name``,
-        ``unit_type`` and ``grams_per_unit`` (NaN unless it is a weight), in
-        display order.
+        Indexed by ``unit_code`` (e.g. ``"oz"``), with columns ``unit_name``
+        and ``unit_type``, in display order.
     """
     rows = fetch_all(
         """
         SELECT
             unit_code,
             unit_name,
-            unit_type,
-            grams_per_unit
+            unit_type
         FROM serving_unit
         ORDER BY sort_order
         """
     )
-    df = pd.DataFrame(rows, columns=["unit_code", "unit_name", "unit_type", "grams_per_unit"])
-    df["grams_per_unit"] = df["grams_per_unit"].astype(float)
+    df = pd.DataFrame(rows, columns=["unit_code", "unit_name", "unit_type"])
     return df.set_index("unit_code")
 
 
@@ -65,8 +62,8 @@ def get_categories() -> pd.DataFrame:
         INNER JOIN food_category AS parent
             ON parent.category_id = fc.parent_category_id
         ORDER BY
-            parent.sort_order,
-            fc.sort_order
+            parent.category_name,
+            fc.category_name
         """
     )
     return pd.DataFrame(rows, columns=["category_id", "parent_name", "label"])
@@ -85,9 +82,8 @@ def get_foods(user_id: int) -> pd.DataFrame:
     -------
     pd.DataFrame
         Indexed by ``food_id``, with columns ``food_name``, ``category_id``,
-        ``parent_name``, ``category_label``, ``serving_size``,
-        ``serving_unit``, ``grams_per_unit`` (NaN unless the unit is a
-        weight) and the macro columns (per serving, as floats).
+        ``parent_name``, ``sub_category_name``, ``category_label``, ``serving_size``,
+        ``serving_unit`` and the macro columns (per serving, as floats).
     """
     rows = fetch_all(
         """
@@ -96,10 +92,10 @@ def get_foods(user_id: int) -> pd.DataFrame:
             f.food_name,
             f.category_id,
             parent.category_name AS parent_name,
+            fc.category_name AS sub_category_name,
             parent.category_name || ' › ' || fc.category_name AS category_label,
             f.serving_size,
             f.serving_unit,
-            su.grams_per_unit,
             f.calories,
             f.protein_g,
             f.carbs_g,
@@ -110,13 +106,11 @@ def get_foods(user_id: int) -> pd.DataFrame:
             ON fc.category_id = f.category_id
         INNER JOIN food_category AS parent
             ON parent.category_id = fc.parent_category_id
-        INNER JOIN serving_unit AS su
-            ON su.unit_code = f.serving_unit
         WHERE f.user_id = %s
             AND f.is_active
         ORDER BY
-            parent.sort_order,
-            fc.sort_order,
+            parent.category_name,
+            fc.category_name,
             f.food_name
         """,
         (user_id,),
@@ -126,14 +120,14 @@ def get_foods(user_id: int) -> pd.DataFrame:
         "food_name",
         "category_id",
         "parent_name",
+        "sub_category_name",
         "category_label",
         "serving_size",
         "serving_unit",
-        "grams_per_unit",
         *MACROS,
     ]
     df = pd.DataFrame(rows, columns=columns).set_index("food_id")
-    numeric = ["serving_size", "grams_per_unit", *MACROS]
+    numeric = ["serving_size", *MACROS]
     df[numeric] = df[numeric].astype(float)
     return df
 
@@ -183,6 +177,38 @@ def _clean_food(values: dict) -> dict:
             raise ValueError(f"{label} for {name} can't be negative.")
         cleaned[column] = value
     return cleaned
+
+
+def _food_params(values: dict) -> tuple:
+    """
+    Return a food's values in the column order used by the SQL below.
+
+    The order is written out here rather than taken from ``FOOD_FIELDS``,
+    so reordering ``MACROS`` for display can never put a value in the
+    wrong column.
+
+    Parameters
+    ----------
+    values : dict
+        Cleaned values from ``_clean_food``.
+
+    Returns
+    -------
+    tuple
+        ``food_name``, ``category_id``, ``serving_size``, ``serving_unit``,
+        ``calories``, ``protein_g``, ``carbs_g``, ``fat_g``, ``fiber_g``.
+    """
+    return (
+        values["food_name"],
+        values["category_id"],
+        values["serving_size"],
+        values["serving_unit"],
+        values["calories"],
+        values["protein_g"],
+        values["carbs_g"],
+        values["fat_g"],
+        values["fiber_g"],
+    )
 
 
 def save_food_changes(
@@ -247,7 +273,7 @@ def save_food_changes(
                     WHERE food_id = %s
                         AND user_id = %s
                     """,
-                    (*(values[field] for field in FOOD_FIELDS), food_id, user_id),
+                    (*_food_params(values), food_id, user_id),
                 )
             for values in inserts:
                 conn.execute(
@@ -266,7 +292,7 @@ def save_food_changes(
                     )
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """,
-                    (user_id, *(values[field] for field in FOOD_FIELDS)),
+                    (user_id, *_food_params(values)),
                 )
     except errors.UniqueViolation:
         raise ValueError("You already have a food with that name. Food names must be unique.")

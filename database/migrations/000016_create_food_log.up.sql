@@ -1,5 +1,5 @@
 /*
-    Migration: 000014_create_food_log (up)
+    Migration: 000016_create_food_log (up)
 
     What:
         Creates the food_log table: what a user ate on a given day, as a

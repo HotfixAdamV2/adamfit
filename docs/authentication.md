@@ -15,7 +15,7 @@ How logging in works in AdamFit, why it was built this way, and what to add late
 ```bash
 uv run adamfit-create-user adam
 ```
-It prompts for the password twice (8+ characters). Usernames are stored in lowercase, and login is case-insensitive.
+It prompts for the password twice (8+ characters). Usernames are stored in lowercase, and login is case-insensitive. A database trigger gives every new user their own copy of the starter food list (`standard_food`).
 
 ## Why these choices
 - **Hashing with Argon2** (via `argon2-cffi`). A hash is one-way: the app can check a password but nobody, including you with database access, can read it back. Argon2 is deliberately slow, which makes guessing expensive. Each hash includes a random salt, so two identical passwords produce different hashes.

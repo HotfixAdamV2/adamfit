@@ -1,11 +1,11 @@
 /*
-    Migration: 000009_create_food (down)
+    Migration: 000011_create_food (down)
 
     What:
         Drops the food table, its sequence, indexes and trigger.
 
     Why:
-        Reverts 000009_create_food.
+        Reverts 000011_create_food.
 */
 
 DROP TABLE food;

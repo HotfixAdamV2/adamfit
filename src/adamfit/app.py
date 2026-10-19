@@ -8,7 +8,10 @@ import streamlit as st
 
 from adamfit import auth
 
-st.set_page_config(page_title="AdamFit", page_icon=":muscle:")
+# This one call sets the page width for every page, because all pages run
+# inside this router. A page can override it by calling
+# st.set_page_config(layout=...) itself.
+st.set_page_config(page_title="AdamFit", page_icon=":muscle:", layout="wide")
 
 user = auth.current_user() if auth.current_user_id() is not None else None
 

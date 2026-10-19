@@ -5,12 +5,23 @@ from datetime import date, timedelta
 import streamlit as st
 
 from adamfit import auth, food_logs, foods, recipes
-from adamfit.nutrition import MACROS
-from adamfit.ui import entries_editor, flash, item_picker, show_flash
+from adamfit.nutrition import MACROS, scale_entries, totals_row
+from adamfit.ui import (
+    apply_changes,
+    count_changes,
+    entries_editor,
+    flash,
+    item_picker,
+    pending_changes,
+    save_bar,
+    show_flash,
+    stage_add,
+    stage_delete,
+    stage_update,
+)
 
 user = auth.current_user()
 user_id = user["user_id"]
-unit_system = user["unit_system"]
 
 st.title("Nutrition")
 show_flash()
@@ -31,18 +42,42 @@ def food_options() -> dict[str, dict]:
     Returns
     -------
     dict[str, dict]
-        Keyed ``"food:<id>"``, with ``label``, ``serving_size``,
-        ``serving_unit`` and ``grams_per_unit`` for ``ui.item_picker``.
+        Keyed ``"food:<id>"``, with ``label``, ``category`` and
+        ``sub_category`` for ``ui.item_picker``, plus ``item_name``,
+        ``serving_size``, ``serving_unit`` and the per-serving macros for
+        ``ui.apply_changes``.
     """
     return {
         f"food:{food_id}": {
             "label": f"{row.food_name} · {row.serving_size:g} {row.serving_unit}",
+            "category": row.parent_name,
+            "sub_category": row.sub_category_name,
+            "item_name": row.food_name,
             "serving_size": row.serving_size,
             "serving_unit": row.serving_unit,
-            "grams_per_unit": row.grams_per_unit,
+            **{column: row[column] for column in MACROS},
         }
         for food_id, row in food_list.iterrows()
     }
+
+
+def saved_message(count: int, where: str) -> str:
+    """
+    Describe how many changes were just saved.
+
+    Parameters
+    ----------
+    count : int
+        Number of changes saved.
+    where : str
+        What was changed, e.g. ``"the log"``.
+
+    Returns
+    -------
+    str
+        For example ``"Saved 3 changes to the log."``.
+    """
+    return f"Saved {count} change{'s' if count != 1 else ''} to {where}."
 
 
 # ---- Daily log ---------------------------------------------------------
@@ -66,52 +101,77 @@ if log_tab.open:
             log_date = st.date_input("Date", key="log_date", width=180)
             st.button("", icon=":material/chevron_right:", help="Next day", on_click=shift_day, args=(1,))
 
-        def add_to_log(option_key: str, servings: float) -> None:
-            """
-            Log the food or recipe chosen in the picker.
-
-            Parameters
-            ----------
-            option_key : str
-                ``"food:<id>"`` or ``"recipe:<id>"``.
-            servings : float
-                Number of servings eaten.
-            """
-            kind, item_id = option_key.split(":")
-            food_logs.add_entry(
-                user_id,
-                st.session_state["log_date"],
-                servings,
-                food_id=int(item_id) if kind == "food" else None,
-                recipe_id=int(item_id) if kind == "recipe" else None,
-            )
+        # Changes are staged per day, so moving to another day keeps them
+        # (unsaved) and shows that day's own changes instead
+        changes_key = f"log_changes_{log_date.isoformat()}"
+        changes = pending_changes(changes_key)
+        other_days = [
+            date.fromisoformat(name.removeprefix("log_changes_"))
+            for name, other in st.session_state.items()
+            if name.startswith("log_changes_") and name != changes_key and count_changes(other)
+        ]
+        if other_days:
+            days = ", ".join(f"{day:%a %b %d}" for day in sorted(other_days))
+            st.warning(f"You also have unsaved changes on {days}.", icon=":material/warning:")
 
         recipe_list = recipes.get_recipes(user_id)
         options = {
             f"recipe:{recipe_id}": {
                 "label": f"Recipe: {row.recipe_name} · 1 {row.serving_label}",
+                # Recipes have no category in the database, so they get
+                # their own entry in the Category filter
+                "category": "Recipes",
+                "sub_category": None,
+                "item_name": row.recipe_name,
                 "serving_size": 1.0,
                 "serving_unit": row.serving_label,
-                "grams_per_unit": None,
+                **{column: row[column] for column in MACROS},
             }
             for recipe_id, row in recipe_list.iterrows()
         }
         options.update(food_options())
-        item_picker(options, key="log_add", unit_system=unit_system, on_add=add_to_log)
+        item_picker(
+            options,
+            key="log_add",
+            on_add=lambda option_key, servings: stage_add(changes, option_key, servings),
+        )
 
-        log = food_logs.get_log(user_id, log_date)
+        log = apply_changes(food_logs.get_log(user_id, log_date), changes, options)
         if log.empty:
             st.info(f"Nothing logged for {log_date:%A, %b %d}. Pick a food or recipe above to start.")
         else:
             entries_editor(
                 log,
                 key="log_table",
-                unit_system=unit_system,
-                on_update=lambda entry_id, servings: food_logs.update_entry(user_id, entry_id, servings),
-                on_delete=lambda entry_id: food_logs.delete_entry(user_id, entry_id),
+                on_update=lambda entry_id, servings: stage_update(changes, entry_id, servings),
+                on_delete=lambda entry_id: stage_delete(changes, entry_id),
                 alt=f"Food log for {log_date:%b %d, %Y}",
+                totals_as_tiles=True,
             )
-            st.caption("Change an amount to update the macros. Select rows and press Delete to remove them.")
+            st.caption(
+                "Change the servings to update the macros. Select rows and press Delete to remove them. "
+                "Nothing is saved until you press Save changes."
+            )
+
+        if save_bar(changes_key):
+            adds = []
+            for add in changes["adds"].values():
+                kind, item_id = add["option_key"].split(":")
+                adds.append(
+                    {
+                        "food_id": int(item_id) if kind == "food" else None,
+                        "recipe_id": int(item_id) if kind == "recipe" else None,
+                        "servings": add["servings"],
+                    }
+                )
+            try:
+                food_logs.save_log_changes(user_id, log_date, adds, changes["updates"], changes["deletes"])
+            except ValueError as e:
+                st.error(str(e))
+            else:
+                flash(saved_message(count_changes(changes), "the log"))
+                del st.session_state[changes_key]
+                st.rerun()
 
 # ---- Recipes -----------------------------------------------------------
 if recipe_tab.open:
@@ -156,43 +216,67 @@ if recipe_tab.open:
             st.info("Choose a recipe, or create a new one, to see its ingredients and macros.")
         else:
             label = recipe["serving_label"]
+            servings_per_recipe = float(recipe["servings_per_recipe"])
+            options = food_options()
+
+            # Ingredient changes are staged per recipe until Save changes
+            changes_key = f"recipe_changes_{recipe_id}"
+            changes = pending_changes(changes_key)
+            ingredients = apply_changes(recipes.get_ingredients(user_id, recipe_id), changes, options)
+
             st.subheader(recipe["recipe_name"])
-            st.caption(f"Makes {float(recipe['servings_per_recipe']):g} × {label}. Macros below are per {label}.")
+            st.caption(f"Makes {servings_per_recipe:g} × {label}. Macros below are per {label}.")
+            # Worked out from the ingredients on screen (rather than read from
+            # vw_recipe_nutrition) so unsaved changes show up here too
+            totals = totals_row(scale_entries(ingredients)).iloc[0]
             with st.container(horizontal=True):
                 for column, macro_label in MACROS.items():
-                    total = float(recipe[f"total_{column}"])
+                    total = float(totals[column])
+                    per_serving = total / servings_per_recipe
                     st.metric(
                         macro_label,
-                        f"{float(recipe[column]):,.0f}" if column == "calories" else f"{float(recipe[column]):.1f}",
+                        f"{per_serving:,.0f}" if column == "calories" else f"{per_serving:.1f}",
                         help=f"Whole recipe: {total:,.1f}",
                         border=True,
                     )
 
             st.markdown("**Ingredients**")
             item_picker(
-                food_options(),
+                options,
                 key=f"recipe_add_{recipe_id}",
-                unit_system=unit_system,
-                on_add=lambda option_key, servings: recipes.add_ingredient(
-                    user_id, recipe_id, int(option_key.split(":")[1]), servings
-                ),
+                on_add=lambda option_key, servings: stage_add(changes, option_key, servings),
                 label="Food",
             )
-            ingredients = recipes.get_ingredients(user_id, recipe_id)
             if ingredients.empty:
                 st.info("No ingredients yet. Add foods above and the macros are calculated for you.")
             else:
                 entries_editor(
                     ingredients,
                     key=f"recipe_table_{recipe_id}",
-                    unit_system=unit_system,
-                    on_update=lambda ingredient_id, servings: recipes.update_ingredient(
-                        user_id, ingredient_id, servings
-                    ),
-                    on_delete=lambda ingredient_id: recipes.delete_ingredient(user_id, ingredient_id),
+                    on_update=lambda ingredient_id, servings: stage_update(changes, ingredient_id, servings),
+                    on_delete=lambda ingredient_id: stage_delete(changes, ingredient_id),
                     alt=f"Ingredients in {recipe['recipe_name']}",
                 )
-                st.caption("Totals are for the whole recipe.")
+                st.caption(
+                    "Change the servings to update the macros. Totals are for the whole recipe. "
+                    "Nothing is saved until you press Save changes."
+                )
+
+            if save_bar(changes_key):
+                adds = [
+                    {"food_id": int(add["option_key"].split(":")[1]), "servings": add["servings"]}
+                    for add in changes["adds"].values()
+                ]
+                try:
+                    recipes.save_ingredient_changes(
+                        user_id, recipe_id, adds, changes["updates"], changes["deletes"]
+                    )
+                except ValueError as e:
+                    st.error(str(e))
+                else:
+                    flash(saved_message(count_changes(changes), "the recipe"))
+                    del st.session_state[changes_key]
+                    st.rerun()
 
             st.markdown("**Instructions**")
             if recipe["instructions"]:
@@ -204,10 +288,10 @@ if recipe_tab.open:
                 with st.form(f"recipe_form_{recipe_id}", border=False):
                     name = st.text_input("Name", value=recipe["recipe_name"], max_chars=100)
                     col_servings, col_label = st.columns(2)
-                    servings_per_recipe = col_servings.number_input(
+                    new_servings_per_recipe = col_servings.number_input(
                         "Makes how many servings?",
                         min_value=0.25,
-                        value=float(recipe["servings_per_recipe"]),
+                        value=servings_per_recipe,
                         step=1.0,
                     )
                     serving_label = col_label.text_input(
@@ -225,7 +309,7 @@ if recipe_tab.open:
                         else:
                             try:
                                 recipes.update_recipe(
-                                    user_id, recipe_id, name, servings_per_recipe, serving_label, instructions
+                                    user_id, recipe_id, name, new_servings_per_recipe, serving_label, instructions
                                 )
                             except ValueError as e:
                                 st.error(str(e))
@@ -237,6 +321,7 @@ if recipe_tab.open:
                     st.write("Remove this recipe? Days you already logged it keep their numbers.")
                     if st.button("Yes, delete it", type="primary"):
                         recipes.delete_recipe(user_id, recipe_id)
+                        st.session_state.pop(changes_key, None)
                         st.session_state["pending_recipe_choice"] = None
                         flash(f"Deleted {recipe['recipe_name']}.")
                         st.rerun()

@@ -1,5 +1,5 @@
 /*
-    Migration: 000013_create_vw_recipe_nutrition (up)
+    Migration: 000015_create_vw_recipe_nutrition (up)
 
     What:
         Creates the vw_recipe_nutrition view: one row per recipe with its

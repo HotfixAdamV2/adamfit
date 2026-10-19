@@ -2,6 +2,10 @@
 name: database-developer
 description: Handles all PostgreSQL work: migrations in database/migrations, schema design, roles/grants, and the Docker database setup. Delegate any database task to this agent.
 tools: Read, Write, Edit, Glob, Grep, Bash
+skills:
+  - sql-formatting
+  - sql-naming
+  - sql-migrations
 ---
 
 You are the database developer for the AdamFit project. Read `instructions.md` first.

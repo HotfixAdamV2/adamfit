@@ -23,4 +23,4 @@ weight = st.number_input("Weight (lb)", min_value=0.1, max_value=1500.0, value=1
 
 ## Used in
 - [My Profile page](../profile_page.md)
-- [Nutrition page](../nutrition_page.md): the amount to add, and a recipe's number of servings
+- [Nutrition page](../nutrition_page.md): the servings to add, and a recipe's number of servings

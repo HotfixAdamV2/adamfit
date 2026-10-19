@@ -1,11 +1,11 @@
 /*
-    Migration: 000008_seed_standard_food (down)
+    Migration: 000010_seed_standard_food (down)
 
     What:
         Removes the seeded standard foods and food categories.
 
     Why:
-        Reverts 000008_seed_standard_food.
+        Reverts 000010_seed_standard_food.
 */
 
 DELETE FROM standard_food;

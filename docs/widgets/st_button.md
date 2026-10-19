@@ -19,10 +19,11 @@ if st.button("Log out", icon=":material/logout:"):
 | `disabled` | Grey out the button | `False` |
 | `args` | Values passed to the `on_click` function | None |
 | `help` | Tooltip shown on hover | None |
+| `key` | Unique name. Needed when two buttons would otherwise look the same to Streamlit (same label on one page) | None |
 
 Inside a form, use [st.form_submit_button](st_form.md) instead.
 
 ## Used in
 - [App router (`app.py`)](../streamlit_basics.md#multipage-apps-and-the-router): the Log out button
 - [My Profile page](../profile_page.md): deleting an entry
-- [Nutrition page](../nutrition_page.md): Add, previous/next day, and confirming a recipe delete
+- [Nutrition page](../nutrition_page.md): Add, previous/next day, Save changes and Revert changes (both `disabled` when nothing is unsaved), and confirming a recipe delete

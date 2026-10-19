@@ -1,5 +1,5 @@
 /*
-    Migration: 000012_create_recipe_ingredient (up)
+    Migration: 000014_create_recipe_ingredient (up)
 
     What:
         Creates the recipe_ingredient table: which foods go into a recipe,

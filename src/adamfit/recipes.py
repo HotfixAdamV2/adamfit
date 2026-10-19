@@ -7,7 +7,7 @@ which adds up the ingredients.
 import pandas as pd
 from psycopg import errors
 
-from adamfit.db import execute, fetch_all, fetch_one
+from adamfit.db import execute, fetch_all, fetch_one, get_connection
 from adamfit.nutrition import MACROS
 
 
@@ -231,9 +231,9 @@ def get_ingredients(user_id: int, recipe_id: int) -> pd.DataFrame:
     -------
     pd.DataFrame
         Indexed by ``recipe_ingredient_id``, with columns ``item_name``,
-        ``servings``, ``serving_size``, ``serving_unit``, ``grams_per_unit``
-        and the food's per-serving macro columns, in the order they were
-        added. This is the shape ``nutrition.scale_entries`` expects.
+        ``servings``, ``serving_size``, ``serving_unit`` and the food's
+        per-serving macro columns, in the order they were added. This is
+        the shape ``nutrition.scale_entries`` expects.
     """
     rows = fetch_all(
         """
@@ -243,7 +243,6 @@ def get_ingredients(user_id: int, recipe_id: int) -> pd.DataFrame:
             ri.servings,
             f.serving_size,
             f.serving_unit,
-            su.grams_per_unit,
             f.calories,
             f.protein_g,
             f.carbs_g,
@@ -254,8 +253,6 @@ def get_ingredients(user_id: int, recipe_id: int) -> pd.DataFrame:
             ON r.recipe_id = ri.recipe_id
         INNER JOIN food AS f
             ON f.food_id = ri.food_id
-        INNER JOIN serving_unit AS su
-            ON su.unit_code = f.serving_unit
         WHERE ri.recipe_id = %s
             AND r.user_id = %s
         ORDER BY
@@ -270,107 +267,102 @@ def get_ingredients(user_id: int, recipe_id: int) -> pd.DataFrame:
         "servings",
         "serving_size",
         "serving_unit",
-        "grams_per_unit",
         *MACROS,
     ]
     df = pd.DataFrame(rows, columns=columns).set_index("recipe_ingredient_id")
-    numeric = ["servings", "serving_size", "grams_per_unit", *MACROS]
+    numeric = ["servings", "serving_size", *MACROS]
     df[numeric] = df[numeric].astype(float)
     return df
 
 
-def add_ingredient(user_id: int, recipe_id: int, food_id: int, servings: float) -> None:
+def save_ingredient_changes(
+    user_id: int,
+    recipe_id: int,
+    adds: list[dict],
+    updates: dict[int, float],
+    deletes: list[int],
+) -> None:
     """
-    Add a food to the end of a recipe's ingredient list.
+    Add, change and remove a recipe's ingredients in a single transaction.
 
-    Nothing is added unless both the recipe and the food belong to the user.
+    Either every change is saved or none are. New ingredients go to the end
+    of the list, in the order given. Nothing is added unless both the recipe
+    and the food belong to the user.
 
     Parameters
     ----------
     user_id : int
-        The user who owns the recipe and the food.
+        The user who owns the recipe and the foods.
     recipe_id : int
-        The recipe to add to.
-    food_id : int
-        The food to add.
-    servings : float
-        How many of the food's servings go into the recipe.
+        The recipe to change.
+    adds : list[dict]
+        New ingredients, each with ``food_id`` and ``servings`` (how many of
+        the food's servings go into the recipe).
+    updates : dict[int, float]
+        New number of servings, keyed by ``recipe_ingredient_id``.
+    deletes : list[int]
+        Ids of the ingredient rows to remove.
+
+    Raises
+    ------
+    ValueError
+        If a number of servings is too large to store. The message is
+        written for the user.
     """
-    execute(
-        """
-        INSERT INTO recipe_ingredient (
-            recipe_id,
-            food_id,
-            servings,
-            sort_order
-        )
-        SELECT
-            r.recipe_id,
-            f.food_id,
-            %s,
-            COALESCE(
-                (
-                    SELECT MAX(sort_order) + 1
-                    FROM recipe_ingredient
-                    WHERE recipe_id = r.recipe_id
-                ),
-                0
-            )
-        FROM recipe AS r
-        INNER JOIN food AS f
-            ON f.user_id = r.user_id
-        WHERE r.recipe_id = %s
-            AND f.food_id = %s
-            AND r.user_id = %s
-        """,
-        (servings, recipe_id, food_id, user_id),
-    )
-
-
-def update_ingredient(user_id: int, recipe_ingredient_id: int, servings: float) -> None:
-    """
-    Change how much of a food goes into a recipe.
-
-    Parameters
-    ----------
-    user_id : int
-        The user who owns the recipe.
-    recipe_ingredient_id : int
-        The ingredient row to change.
-    servings : float
-        New number of the food's servings.
-    """
-    execute(
-        """
-        UPDATE recipe_ingredient AS ri
-        SET servings = %s
-        FROM recipe AS r
-        WHERE r.recipe_id = ri.recipe_id
-            AND ri.recipe_ingredient_id = %s
-            AND r.user_id = %s
-        """,
-        (servings, recipe_ingredient_id, user_id),
-    )
-
-
-def delete_ingredient(user_id: int, recipe_ingredient_id: int) -> None:
-    """
-    Remove a food from a recipe.
-
-    Parameters
-    ----------
-    user_id : int
-        The user who owns the recipe.
-    recipe_ingredient_id : int
-        The ingredient row to remove.
-    """
-    execute(
-        """
-        DELETE FROM recipe_ingredient AS ri
-        USING recipe AS r
-        WHERE r.recipe_id = ri.recipe_id
-            AND ri.recipe_ingredient_id = %s
-            AND r.user_id = %s
-        """,
-        (recipe_ingredient_id, user_id),
-    )
+    try:
+        with get_connection() as conn:
+            for recipe_ingredient_id in deletes:
+                conn.execute(
+                    """
+                    DELETE FROM recipe_ingredient AS ri
+                    USING recipe AS r
+                    WHERE r.recipe_id = ri.recipe_id
+                        AND ri.recipe_ingredient_id = %s
+                        AND r.user_id = %s
+                    """,
+                    (recipe_ingredient_id, user_id),
+                )
+            for recipe_ingredient_id, servings in updates.items():
+                conn.execute(
+                    """
+                    UPDATE recipe_ingredient AS ri
+                    SET servings = %s
+                    FROM recipe AS r
+                    WHERE r.recipe_id = ri.recipe_id
+                        AND ri.recipe_ingredient_id = %s
+                        AND r.user_id = %s
+                    """,
+                    (servings, recipe_ingredient_id, user_id),
+                )
+            for ingredient in adds:
+                conn.execute(
+                    """
+                    INSERT INTO recipe_ingredient (
+                        recipe_id,
+                        food_id,
+                        servings,
+                        sort_order
+                    )
+                    SELECT
+                        r.recipe_id,
+                        f.food_id,
+                        %s,
+                        COALESCE(
+                            (
+                                SELECT MAX(sort_order) + 1
+                                FROM recipe_ingredient
+                                WHERE recipe_id = r.recipe_id
+                            ),
+                            0
+                        )
+                    FROM recipe AS r
+                    INNER JOIN food AS f
+                        ON f.user_id = r.user_id
+                    WHERE r.recipe_id = %s
+                        AND f.food_id = %s
+                        AND r.user_id = %s
+                    """,
+                    (ingredient["servings"], recipe_id, ingredient["food_id"], user_id),
+                )
+    except errors.NumericValueOutOfRange:
+        raise ValueError("One of the servings is too large.")

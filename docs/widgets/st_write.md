@@ -14,4 +14,4 @@ st.write("Welcome to my personal fitness app.")
 | `unsafe_allow_html` | Allow raw HTML in strings. Avoid unless needed | `False` |
 
 ## Used in
-- [Home page](../home_page.md)
+- Not used on any page at the moment. Pages use [st.markdown](st_markdown.md) for plain text.

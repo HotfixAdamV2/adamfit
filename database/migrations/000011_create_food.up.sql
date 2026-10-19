@@ -1,5 +1,5 @@
 /*
-    Migration: 000009_create_food (up)
+    Migration: 000011_create_food (up)
 
     What:
         Creates the food table: each user's own, fully editable list of
@@ -7,7 +7,7 @@
 
     Why:
         Users build recipes from, and log meals against, their own food
-        list. Each user starts with a copy of standard_food (see 000010)
+        list. Each user starts with a copy of standard_food (see 000012)
         and can then add, edit or remove foods freely.
 
     Notes:
@@ -19,6 +19,8 @@
           index, because constraints cannot have a WHERE clause.
         - standard_food_id records which standard food a row was copied
           from (NULL for foods the user created).
+        - serving_unit must be a unit_code in serving_unit (000007), with
+          ON UPDATE CASCADE, the same as standard_food.
 */
 
 -- Create sequence
@@ -52,12 +54,12 @@ CREATE TABLE food (
         REFERENCES app_user (user_id) ON DELETE CASCADE,
     CONSTRAINT fk_food_category_id FOREIGN KEY (category_id)
         REFERENCES food_category (category_id),
+    CONSTRAINT fk_food_serving_unit FOREIGN KEY (serving_unit)
+        REFERENCES serving_unit (unit_code) ON UPDATE CASCADE,
     CONSTRAINT fk_food_standard_food_id FOREIGN KEY (standard_food_id)
         REFERENCES standard_food (standard_food_id) ON DELETE SET NULL,
     CONSTRAINT chk_food_food_name CHECK (LENGTH(TRIM(food_name)) > 0),
     CONSTRAINT chk_food_serving_size CHECK (serving_size > 0),
-    CONSTRAINT chk_food_serving_unit
-        CHECK (serving_unit IN ('g', 'ml', 'cup', 'tbsp', 'tsp', 'piece', 'slice', 'serving')),
     CONSTRAINT chk_food_macros
         CHECK (calories >= 0 AND protein_g >= 0 AND carbs_g >= 0 AND fat_g >= 0 AND fiber_g >= 0)
 );
