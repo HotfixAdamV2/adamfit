@@ -1,43 +1,35 @@
 # Home Page
 
-**File:** `src/adamfit/app.py`
+**File:** `src/adamfit/pages/home.py`
 
 ## What you see
-A welcome message and a green or red box telling you whether the app can reach the database.
+A greeting with your username and a link to the My Profile page. You only see this page after logging in.
 
 ## How it works
-1. The browser tab title and icon are set.
+1. The logged-in user is loaded from the database.
    ```python
-   st.set_page_config(page_title="AdamFit", page_icon=":muscle:")
+   user = auth.current_user()
    ```
-2. The heading and welcome text are shown.
+2. The heading greets them by name, followed by the welcome text.
    ```python
-   st.title("AdamFit")
+   st.title(f"Welcome, {user['username']}")
    st.write("Welcome to my personal fitness app.")
    ```
-3. The shared connection pool is created (first run only), then a trivial query (`SELECT 1`) tests the database. A success box is shown if it works, otherwise the error is shown.
+3. A link takes them to the profile page.
    ```python
-   try:
-       get_pool()  # create the shared connection pool on first run
-       fetch_all("SELECT 1 AS ok")
-       st.success("Connected to the database.")
-   except Exception as exc:
-       st.error(f"Could not connect to the database: {exc}")
+   st.page_link("pages/profile.py", label="Log your weight on My Profile", icon=":material/monitor_weight:")
    ```
 
 ## Widgets used
-- [st.set_page_config](widgets/st_set_page_config.md): sets the tab title and icon
-- [st.title](widgets/st_title.md): the page heading
+- [st.title](widgets/st_title.md): the greeting
 - [st.write](widgets/st_write.md): the welcome text
-- [st.success / st.error](widgets/st_status_messages.md): shows whether the connection worked
+- [st.page_link](widgets/st_navigation.md): link to My Profile
 
 ## Core functions
-- `fetch_all` (`src/adamfit/db.py`): borrows a pooled connection, runs a query and returns the rows.
+- `current_user` (`src/adamfit/auth.py`): looks up who is logged in (from `st.session_state`) and loads their profile from the database.
   ```python
-  fetch_all("SELECT 1 AS ok")
+  user = auth.current_user()
   ```
-- `get_pool` (`src/adamfit/db.py`): creates the shared connection pool the first time it is called, using the settings in the `.env` file. The page calls it once so the pool is ready. See [Streamlit basics](streamlit_basics.md#4-the-connection-pool).
-  ```python
-  get_pool()
-  ```
-- `get_connection` (`src/adamfit/db.py`): borrows a connection from the pool for a `with` block. `fetch_all` uses it for you.
+
+## Database tables used
+- `app_user`: read only.

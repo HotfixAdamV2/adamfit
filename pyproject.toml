@@ -22,10 +22,12 @@ dependencies = [
     "streamlit>=1.65.0",
     "psycopg[binary,pool]>=3.3.6",
     "python-dotenv>=1.2.4",
+    "argon2-cffi>=25.1.0",
 ]
 
 
 [project.scripts]
+adamfit-create-user = "adamfit.cli.create_user:main"
 
 
 [dependency-groups]

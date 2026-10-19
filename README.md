@@ -35,13 +35,19 @@ docker compose run --rm migrate up          # apply all
 docker compose run --rm migrate down 1      # roll back one
 ```
 
-## 4. Run the app
+## 4. Create your login
+```bash
+uv run adamfit-create-user <username>
+```
+You'll be prompted for a password. See `docs/authentication.md` for how login works.
+
+## 5. Run the app
 From the project root:
 ```bash
 uv sync
 uv run streamlit run src/adamfit/app.py
 ```
-Open http://localhost:8501. The home page should show "Connected to the database", and the Exercises page should list the dummy data.
+Open http://localhost:8501. Log in with the user you created. My Profile is where you set your details and log your weight.
 
 ## Stopping and resetting
 ```bash

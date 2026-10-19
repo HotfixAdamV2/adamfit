@@ -1,0 +1,28 @@
+# st.button
+
+A clickable button. It returns `True` only on the run right after it was clicked, and `False` on every other run.
+
+## Basic example
+```python
+if st.button("Log out", icon=":material/logout:"):
+    auth.log_out()
+    st.rerun()
+```
+
+## Parameters
+| Parameter | What it does | Default |
+|-----------|--------------|---------|
+| `label` | Button text | required |
+| `type` | `"primary"`, `"secondary"` or `"tertiary"` | `"secondary"` |
+| `icon` | Emoji or `:material/name:` icon | None |
+| `on_click` | Function to call before the rerun | None |
+| `disabled` | Grey out the button | `False` |
+| `args` | Values passed to the `on_click` function | None |
+| `help` | Tooltip shown on hover | None |
+
+Inside a form, use [st.form_submit_button](st_form.md) instead.
+
+## Used in
+- [App router (`app.py`)](../streamlit_basics.md#multipage-apps-and-the-router): the Log out button
+- [My Profile page](../profile_page.md): deleting an entry
+- [Nutrition page](../nutrition_page.md): Add, previous/next day, and confirming a recipe delete

@@ -16,4 +16,4 @@ st.set_page_config(page_title="AdamFit", page_icon=":muscle:")
 | `initial_sidebar_state` | `"auto"`, `"expanded"` or `"collapsed"` | `"auto"` |
 
 ## Used in
-- [Home page](../home_page.md)
+- [App router (`app.py`)](../streamlit_basics.md#multipage-apps-and-the-router)

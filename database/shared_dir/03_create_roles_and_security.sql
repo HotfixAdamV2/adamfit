@@ -29,6 +29,10 @@ REVOKE ALL ON SCHEMA public FROM PUBLIC;
 REVOKE ALL ON DATABASE fitness FROM PUBLIC;
 GRANT CONNECT ON DATABASE fitness TO master;
 
+-- Allow temporary tables (session-only scratch tables, e.g. for staging
+-- data inside a migration). They live in a private pg_temp schema, not public.
+GRANT TEMPORARY ON DATABASE fitness TO master;
+
 ALTER DATABASE fitness SET search_path = fit;
 
 -- The master role owns the fit schema and has full control of it

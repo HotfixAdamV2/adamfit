@@ -98,3 +98,43 @@ def fetch_all(query: str, params: tuple | None = None) -> list[dict]:
     """
     with get_connection() as conn:
         return conn.execute(query, params).fetchall()
+
+
+def fetch_one(query: str, params: tuple | None = None) -> dict | None:
+    """
+    Run a query and return its first row.
+
+    Parameters
+    ----------
+    query : str
+        SQL to run. Use ``%s`` placeholders for values.
+    params : tuple | None, optional
+        Values for the placeholders in ``query``.
+
+    Returns
+    -------
+    dict | None
+        The first row keyed by column name, or None if there were no rows.
+    """
+    with get_connection() as conn:
+        return conn.execute(query, params).fetchone()
+
+
+def execute(query: str, params: tuple | None = None) -> int:
+    """
+    Run an INSERT, UPDATE or DELETE and commit it.
+
+    Parameters
+    ----------
+    query : str
+        SQL to run. Use ``%s`` placeholders for values.
+    params : tuple | None, optional
+        Values for the placeholders in ``query``.
+
+    Returns
+    -------
+    int
+        Number of rows affected.
+    """
+    with get_connection() as conn:
+        return conn.execute(query, params).rowcount
