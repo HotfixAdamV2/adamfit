@@ -19,4 +19,4 @@ password = st.text_input("Password", type="password", autocomplete="current-pass
 
 ## Used in
 - [Login page](../login_page.md)
-- [Nutrition page](../nutrition_page.md): recipe name, serving label and food search
+- [Nutrition page](../nutrition_page.md): recipe name, serving label, food search, the food name in the food pop-up, and new category names and renames (`max_chars=50`, the database limit)

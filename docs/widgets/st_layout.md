@@ -1,4 +1,4 @@
-# Layout: st.columns, st.container, st.expander and st.sidebar
+# Layout: st.columns, st.container, st.expander, st.divider and st.sidebar
 
 These don't collect input. They control **where** other elements appear.
 
@@ -42,6 +42,12 @@ with st.expander("Delete an entry"):
 | `expanded` | Start open | `False` |
 | `icon` | Icon on the header | None |
 
+## st.divider
+A thin horizontal line between two sections.
+```python
+st.divider()
+```
+
 ## st.sidebar
 The panel on the left. Anything drawn inside `with st.sidebar:` goes there instead of the main page.
 ```python
@@ -53,4 +59,4 @@ with st.sidebar:
 - [App router (`app.py`)](../streamlit_basics.md#multipage-apps-and-the-router): sidebar
 - [Home page](../home_page.md): a horizontal container for the macro tiles (inside `ui.macro_tiles`)
 - [My Profile page](../profile_page.md): columns and expanders
-- [Nutrition page](../nutrition_page.md): horizontal containers (the filter row, the add row and the Save / Revert row), columns and the Edit recipe details expander
+- [Nutrition page](../nutrition_page.md): horizontal containers (the filter row, the add row and the Save / Revert row), columns, the Edit recipe details expander, a divider above Delete food in the food pop-up, a bordered container around the new-category boxes, and in the Manage categories pop-up a closed "Built-in categories" expander (with a lock `icon`) and dividers between its sections

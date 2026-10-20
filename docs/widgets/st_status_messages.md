@@ -18,4 +18,4 @@ st.error(f"Could not connect to the database: {exc}")
 - [Home page](../home_page.md): the "nothing logged today" note
 - [Login page](../login_page.md): wrong password and database errors
 - [My Profile page](../profile_page.md): save confirmations and empty-chart notes
-- [Nutrition page](../nutrition_page.md): empty days and recipes, validation errors, save confirmations, and an `st.warning` when other days still have unsaved changes
+- [Nutrition page](../nutrition_page.md): empty days and recipes, validation errors (including the database's "still has active foods" message when a category can't be removed), save confirmations, and an `st.warning` when other days still have unsaved changes

@@ -34,4 +34,4 @@ if submitted:
 ## Used in
 - [Login page](../login_page.md)
 - [My Profile page](../profile_page.md)
-- [Nutrition page](../nutrition_page.md): new recipe, recipe details, and batching edits to the food list
+- [Nutrition page](../nutrition_page.md): the New recipe and recipe details forms. The food pop-up is *not* a form, so that choosing "+ New category" can show extra boxes straight away (see [st.dialog](st_dialog.md))

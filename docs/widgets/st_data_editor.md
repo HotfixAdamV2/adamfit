@@ -44,11 +44,13 @@ st.data_editor(
 | `st.column_config.NumberColumn(label, min_value=, step=, format=, default=, disabled=)` | Number cells. `format="%.2f"` shows two decimals, `step=0.25` sets the +/- step |
 | `st.column_config.SelectboxColumn(label, options=, format_func=, default=)` | A dropdown in each cell. `format_func` turns stored values (e.g. ids) into labels |
 
+`st.column_config.ButtonColumn` (a button on every row) also works in `st.data_editor`. See [st.dataframe](st_dataframe.md#a-button-on-every-row-buttoncolumn).
+
 All of them accept `width` (`"small"`, `"medium"`, `"large"` or pixels) and `required` (a new row must fill it in).
 
-## Two ways to batch changes
+## Batching changes
 - **Stage, then save on a button**: pass `on_change`. The callback reads the change record and copies it into our own "changes" dictionary in `st.session_state`, without touching the database. Then the editor gets a new `key` (we add a version number) so it starts fresh, and the page redraws it from the database rows with the staged changes applied. **Save changes** writes them all in one transaction, **Revert changes** throws them away. Used for the daily log and recipe ingredients, because adding a row happens outside the editor (in the add row above it) and has to be staged in the same place.
-- **In a form**: put the editor in a [form](st_form.md). Edits are only sent when the form's submit button is pressed. Used for the food list.
+- **In a form** (not used at the moment): put the editor in a [form](st_form.md). Edits are only sent when the form's submit button is pressed.
 
 ## Used in
-- [Nutrition page](../nutrition_page.md)
+- [Nutrition page](../nutrition_page.md): the Daily log and recipe ingredient tables (inside `ui.entries_editor`). The Foods tab uses a read-only [st.dataframe](st_dataframe.md) with an Edit button per row, and a pop-up, instead.

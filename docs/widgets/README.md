@@ -11,6 +11,7 @@ Short explanations of the Streamlit widgets and elements used in AdamFit. Page d
 | [st.success / st.error / st.info](st_status_messages.md) | Coloured message boxes |
 | [st.form / st.form_submit_button](st_form.md) | Groups inputs so they submit together |
 | [st.button](st_button.md) | A clickable button |
+| [st.checkbox](st_checkbox.md) | Tick box |
 | [st.text_input](st_text_input.md) | Single-line text box |
 | [st.number_input](st_number_input.md) | Number box with +/- buttons |
 | [st.date_input](st_date_input.md) | Calendar date picker |
@@ -19,9 +20,10 @@ Short explanations of the Streamlit widgets and elements used in AdamFit. Page d
 | [st.metric](st_metric.md) | Big number with a change indicator |
 | [st.text_area](st_text_area.md) | Multi-line text box |
 | [st.markdown](st_markdown.md) | Formatted text (bold, lists, links) |
-| [st.dataframe](st_dataframe.md) | Interactive table |
+| [st.dataframe](st_dataframe.md) | Interactive table, plus `ButtonColumn` (a button per row) |
 | [st.data_editor](st_data_editor.md) | Editable table, plus `st.column_config` |
 | [st.altair_chart](st_altair_chart.md) | Charts (line, bar, ...) |
 | [st.tabs](st_tabs.md) | Content split into tabs |
 | [st.popover](st_popover.md) | Button that opens a small panel |
-| [st.columns / st.container / st.expander / st.sidebar](st_layout.md) | Page layout |
+| [st.dialog](st_dialog.md) | Pop-up window drawn by a function |
+| [st.columns / st.container / st.expander / st.divider / st.sidebar](st_layout.md) | Page layout |
