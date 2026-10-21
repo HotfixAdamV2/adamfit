@@ -1,0 +1,43 @@
+name: adamfit
+
+services:
+  db:
+    build: .
+    image: adamfit-postgres:18
+    container_name: adamfit-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      MASTER_USR_PASSWORD: ${MASTER_USR_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      # Postgres 18+ keeps its versioned data directory under /var/lib/postgresql
+      - pgdata:/var/lib/postgresql
+      # Contains the shell script that runs once on first start of an empty volume
+      - ./setup_scripts:/docker-entrypoint-initdb.d:ro
+      # Free two-way folder for SQL scripts between host and container
+      - ./shared_dir:/shared_dir
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Run on demand: docker compose run --rm migrate up
+  migrate:
+    image: migrate/migrate:v4.18.3
+    profiles: ["tools"]
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./migrations:/migrations:ro
+    entrypoint:
+      - migrate
+      - -path=/migrations
+      - -database=postgres://master_usr:${MASTER_USR_PASSWORD}@db:5432/fitness?sslmode=disable
+
+volumes:
+  pgdata:
