@@ -6,12 +6,30 @@ page. Logged-in users get the full menu and a log-out button.
 
 import streamlit as st
 
-from adamfit import auth
+from adamfit import auth, google_health
+from adamfit.ui import flash
 
 # This one call sets the page width for every page, because all pages run
 # inside this router. A page can override it by calling
 # st.set_page_config(layout=...) itself.
 st.set_page_config(page_title="AdamFit", page_icon=":muscle:", layout="wide")
+
+# Google Health sends the browser back here with ?code=...&state=... (or
+# ?error=...&state=...) after the user approves or cancels. That arrives in
+# a brand-new, logged-out session, so the user is found by the state value
+# in the database. Nobody is logged in by this; the message is shown on the
+# login page and the user returns to their original AdamFit tab.
+if "state" in st.query_params and ("code" in st.query_params or "error" in st.query_params):
+    try:
+        google_health.handle_callback(st.query_params.to_dict())
+        flash(
+            "Google Health connected. You can close this tab and click **Refresh status** "
+            "in your AdamFit tab."
+        )
+    except google_health.GoogleHealthError as exc:
+        flash(str(exc), kind="error")
+    # Remove the one-time code from the address bar so it isn't reused
+    st.query_params.clear()
 
 user = auth.current_user() if auth.current_user_id() is not None else None
 

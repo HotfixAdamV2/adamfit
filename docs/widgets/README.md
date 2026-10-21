@@ -9,8 +9,10 @@ Short explanations of the Streamlit widgets and elements used in AdamFit. Page d
 | [st.title / st.subheader / st.caption](st_title.md) | Headings and small notes |
 | [st.write](st_write.md) | Shows text or almost any value |
 | [st.success / st.error / st.info](st_status_messages.md) | Coloured message boxes |
+| [st.spinner](st_spinner.md) | "Busy" indicator while slow code runs |
 | [st.form / st.form_submit_button](st_form.md) | Groups inputs so they submit together |
 | [st.button](st_button.md) | A clickable button |
+| [st.link_button](st_link_button.md) | Button that opens a web address in a new tab |
 | [st.checkbox](st_checkbox.md) | Tick box |
 | [st.text_input](st_text_input.md) | Single-line text box |
 | [st.number_input](st_number_input.md) | Number box with +/- buttons |

@@ -58,5 +58,5 @@ with st.sidebar:
 ## Used in
 - [App router (`app.py`)](../streamlit_basics.md#multipage-apps-and-the-router): sidebar
 - [Home page](../home_page.md): a horizontal container for the macro tiles (inside `ui.macro_tiles`)
-- [My Profile page](../profile_page.md): columns and expanders
+- [My Profile page](../profile_page.md): columns, expanders (including the Google Health sync expander with a sync `icon`), and a horizontal container for the Connect / Refresh status buttons
 - [Nutrition page](../nutrition_page.md): horizontal containers (the filter row, the add row and the Save / Revert row), columns, the Edit recipe details expander, a divider above Delete food in the food pop-up, a bordered container around the new-category boxes, and in the Manage categories pop-up a closed "Built-in categories" expander (with a lock `icon`) and dividers between its sections

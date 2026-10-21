@@ -10,9 +10,9 @@ from adamfit.nutrition import MACROS, scale_entries, to_amount, totals_row
 _FLASH_KEY = "_flash"
 
 
-def flash(message: str) -> None:
+def flash(message: str, kind: str = "success") -> None:
     """
-    Store a success message to show after the next rerun.
+    Store a message to show after the next rerun.
 
     ``st.rerun()`` wipes anything already drawn, so a message shown just
     before it would vanish. Call this, then ``st.rerun()``, and call
@@ -22,16 +22,23 @@ def flash(message: str) -> None:
     ----------
     message : str
         The message to show.
+    kind : str, optional
+        ``"success"`` (green box) or ``"error"`` (red box).
     """
-    st.session_state[_FLASH_KEY] = message
+    st.session_state[_FLASH_KEY] = (message, kind)
 
 
 def show_flash() -> None:
     """
     Show and clear the message stored by ``flash``, if there is one.
     """
-    message = st.session_state.pop(_FLASH_KEY, None)
-    if message:
+    stored = st.session_state.pop(_FLASH_KEY, None)
+    if stored is None:
+        return
+    message, kind = stored
+    if kind == "error":
+        st.error(message)
+    else:
         st.success(message)
 
 

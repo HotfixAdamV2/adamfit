@@ -3,8 +3,11 @@
 import streamlit as st
 
 from adamfit import auth
+from adamfit.ui import show_flash
 
 st.title("AdamFit")
+# Shows the result of a Google Health connection, which lands on this page
+show_flash()
 st.subheader("Log in")
 
 with st.form("login_form"):

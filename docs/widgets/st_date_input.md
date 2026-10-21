@@ -18,5 +18,5 @@ weigh_date = st.date_input("Date", value=date.today(), max_value=date.today())
 | `width` | `"stretch"` or a width in pixels | `"stretch"` |
 
 ## Used in
-- [My Profile page](../profile_page.md)
+- [My Profile page](../profile_page.md): birth date, weigh-in date, and the start and end dates of a Google Health sync (`min_value` / `max_value` limit the range)
 - [Nutrition page](../nutrition_page.md): the day being logged (the ‹ › buttons change it through its key)

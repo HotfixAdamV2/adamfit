@@ -14,7 +14,7 @@ A personal fitness web app. It is also a learning project for agentic developmen
 ## Layout
 | Path | Contents |
 |------|----------|
-| `src/adamfit/` | Python and Streamlit code: `app.py` (router), `pages/`, `db.py` (pool + helpers), `auth.py`, one query module per table (`users.py`, `weights.py`, `foods.py`, `recipes.py`, `food_logs.py`), `units.py`, `nutrition.py` (serving/macro maths), `ui.py`, `cli/` |
+| `src/adamfit/` | Python and Streamlit code: `app.py` (router), `pages/`, `db.py` (pool + helpers), `auth.py`, one query module per table (`users.py`, `weights.py`, `foods.py`, `recipes.py`, `food_logs.py`, `google_health_connection.py`), `google_health.py` (Google Health API OAuth + sync, see `docs/google_health_setup.md`), `units.py`, `nutrition.py` (serving/macro maths), `ui.py`, `cli/` |
 | `database/` | `docker-compose.yml`, `Dockerfile`, its own `.env` |
 | `database/setup_scripts/` | Mounted into the container; `init.sh` runs once on first start |
 | `database/shared_dir/` | Two-way shared folder; holds the initial-setup SQL files |

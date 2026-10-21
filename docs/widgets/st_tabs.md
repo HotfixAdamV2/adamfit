@@ -23,3 +23,4 @@ By default every tab's code runs on every rerun, even the hidden ones. With `on_
 
 ## Used in
 - [Nutrition page](../nutrition_page.md)
+- [My Profile page](../profile_page.md)

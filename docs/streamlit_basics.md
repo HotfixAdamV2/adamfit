@@ -57,11 +57,12 @@ Logged-out visitors only have the login page, so other pages can't be reached ev
 
 | Path | What lives there |
 |------|------------------|
-| `src/adamfit/app.py` | The entry point and router: picks which pages exist, and the sidebar |
+| `src/adamfit/app.py` | The entry point and router: picks which pages exist, and the sidebar. Also finishes a Google Health connection when Google redirects back |
 | `src/adamfit/pages/` | One file per page (`login.py`, `home.py`, `profile.py`, `exercises.py`) |
 | `src/adamfit/db.py` | The connection pool and generic query helpers (`fetch_all`, `fetch_one`, `execute`) |
 | `src/adamfit/auth.py` | Password hashing and who is logged in |
 | `src/adamfit/users.py`, `weights.py` | Queries for one table each (`app_user`, `user_weight`) |
+| `src/adamfit/google_health.py`, `google_health_connection.py` | Google Health (Fitbit) login and weight sync, and the queries for its `google_health_connection` table |
 | `src/adamfit/units.py` | lb/kg and ft-in/cm conversions |
 | `src/adamfit/ui.py` | Small helpers shared by pages (flash messages) |
 | `src/adamfit/cli/` | Terminal commands, such as `adamfit-create-user` |

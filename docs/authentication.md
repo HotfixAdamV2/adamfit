@@ -22,6 +22,7 @@ It prompts for the password twice (8+ characters). Usernames are stored in lower
 - **No sign-up page.** While it's just you, open registration would let anyone on your network create an account. A terminal command is simpler and safer.
 - **Same error for a wrong username or a wrong password.** `authenticate()` even hashes a dummy value when the username doesn't exist, so both cases take the same time and nobody can find out which usernames exist.
 - **Router-level protection.** Pages aren't individually guarded. `app.py` simply doesn't register them for logged-out visitors, so there's nothing to reach by URL.
+- **Google Health never logs you in.** When Google sends you back after connecting Google Health, that tab is a new, logged-out session. `app.py` only stores the Google tokens for the user who started the connection (found by a one-time value in the database) and shows a message on the login page. See [Google Health setup](google_health_setup.md#how-syncing-works).
 - **Not Streamlit's built-in `st.login`.** It uses an external identity provider (Google, Auth0, ...) over OpenID Connect. That's the right move for a public, multi-user deployment, but overkill for a local app.
 
 ## Known limitations (fine for local use)

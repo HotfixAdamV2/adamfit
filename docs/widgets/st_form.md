@@ -33,5 +33,5 @@ if submitted:
 
 ## Used in
 - [Login page](../login_page.md)
-- [My Profile page](../profile_page.md)
+- [My Profile page](../profile_page.md): body details, weight entry, and the Google Health sync dates
 - [Nutrition page](../nutrition_page.md): the New recipe and recipe details forms. The food pop-up is *not* a form, so that choosing "+ New category" can show extra boxes straight away (see [st.dialog](st_dialog.md))
