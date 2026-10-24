@@ -29,6 +29,9 @@ with st.container(horizontal=True, vertical_alignment="bottom"):
 | `vertical_alignment` | In a row: `"top"`, `"center"` or `"bottom"` | `"top"` |
 | `border` | Draw a box around it | `False` |
 | `gap` | Space between items | `"small"` |
+| `height` | `"content"` (fit the contents), `"stretch"` (as tall as the parent, e.g. the tallest column in a row) or pixels (scrolls if the contents are taller) | `"content"` |
+
+An empty `st.container()` can also reserve a spot: draw into it later with `with spot:`, and its contents appear where the container was created. The charts use this to put the chart above controls that are read first.
 
 ## st.expander
 A collapsible section. Good for things that are useful but not always needed.
@@ -57,6 +60,7 @@ with st.sidebar:
 
 ## Used in
 - [App router (`app.py`)](../streamlit_basics.md#multipage-apps-and-the-router): sidebar
-- [Home page](../home_page.md): a horizontal container for the macro tiles (inside `ui.macro_tiles`)
+- [Home page](../home_page.md): a horizontal container for the macro tiles (inside `ui.macro_tiles`), a bordered container around the weigh-in reminder, and the two-wide chart grid (`st.columns(2)` per row)
+- [Charts over time](../charts.md): a bordered card per chart (`height="stretch"` in the grid, so cards in a row are equally tall), a horizontal heading row, an empty `st.container()` reserving the chart's spot above its controls, and a horizontal container holding the rolling-average box and the pills
 - [My Profile page](../profile_page.md): columns, expanders (including the Google Health sync expander with a sync `icon`), and a horizontal container for the Connect / Refresh status buttons
 - [Nutrition page](../nutrition_page.md): horizontal containers (the filter row, the add row and the Save / Revert row), columns, the Edit recipe details expander, a divider above Delete food in the food pop-up, a bordered container around the new-category boxes, and in the Manage categories pop-up a closed "Built-in categories" expander (with a lock `icon`) and dividers between its sections

@@ -16,10 +16,11 @@ st.metric("Current weight", "198.4 lb", delta="+0.6 lb", delta_color="off")
 | `delta_color` | `"normal"` (up green, down red), `"inverse"` (up red), or `"off"` (grey) | `"normal"` |
 | `help` | Tooltip next to the label | None |
 | `border` | Draw a box around the metric | `False` |
+| `width` | `"stretch"`, `"content"` (just wide enough for its text) or pixels | `"stretch"` |
 
 We use `delta_color="off"` for weight because whether going up is "good" depends on your goal.
 
 ## Used in
-- [Home page](../home_page.md): today's macro totals (with `border=True`), in the order fat, carbs, protein, fiber, calories
+- [Home page](../home_page.md): today's weight (`border=True, width="content"`) and today's macro totals (with `border=True`), in the order fat, carbs, protein, fiber, calories
 - [My Profile page](../profile_page.md)
 - [Nutrition page](../nutrition_page.md): the Daily log's totals and a recipe's macros per serving (with `border=True`)

@@ -140,3 +140,57 @@ def save_log_changes(
                 )
     except errors.NumericValueOutOfRange:
         raise ValueError("One of the servings is too large.")
+
+
+def get_daily_totals(user_id: int, start: date | None, end: date) -> pd.DataFrame:
+    """
+    Add up each day's macros, one row per day that has something logged.
+
+    Food and recipe entries are both included: each entry's per-serving
+    macros are multiplied by the servings eaten, then summed per day. Days
+    with nothing logged have no row at all (they are not returned as zero).
+
+    Parameters
+    ----------
+    user_id : int
+        The user whose log to add up.
+    start : date | None
+        First day to include. None includes everything up to ``end``.
+    end : date
+        Last day to include.
+
+    Returns
+    -------
+    pd.DataFrame
+        Columns ``log_date`` (datetime) and the macro columns in ``MACROS``
+        (daily totals as floats), oldest day first. Empty if nothing was
+        logged in the range.
+    """
+    rows = fetch_all(
+        """
+        SELECT
+            fl.log_date,
+            SUM(fl.servings * COALESCE(f.calories, r.calories)) AS calories,
+            SUM(fl.servings * COALESCE(f.protein_g, r.protein_g)) AS protein_g,
+            SUM(fl.servings * COALESCE(f.carbs_g, r.carbs_g)) AS carbs_g,
+            SUM(fl.servings * COALESCE(f.fat_g, r.fat_g)) AS fat_g,
+            SUM(fl.servings * COALESCE(f.fiber_g, r.fiber_g)) AS fiber_g
+        FROM food_log AS fl
+        LEFT JOIN food AS f
+            ON f.food_id = fl.food_id
+        LEFT JOIN vw_recipe_nutrition AS r
+            ON r.recipe_id = fl.recipe_id
+        WHERE fl.user_id = %s
+            AND fl.log_date >= %s
+            AND fl.log_date <= %s
+        GROUP BY fl.log_date
+        ORDER BY fl.log_date
+        """,
+        # date.min (year 1) stands for "no start date"
+        (user_id, start or date.min, end),
+    )
+    df = pd.DataFrame(rows, columns=["log_date", *MACROS])
+    df["log_date"] = pd.to_datetime(df["log_date"])
+    # A macro with no values that day (e.g. no fiber recorded) adds up to NULL
+    df[list(MACROS)] = df[list(MACROS)].astype(float).fillna(0.0)
+    return df

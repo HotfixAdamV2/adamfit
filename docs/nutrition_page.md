@@ -4,7 +4,7 @@
 
 ## What you see
 Three tabs:
-1. **Daily log**: pick a day (with ‹ and › buttons for the previous and next day). Narrow the list with the **Category** and **Sub-category** boxes, search for a food or recipe, enter how many servings you ate and press **Add**. Recipes have their own "Recipes" entry in Category. A small note next to the box shows what one serving is (e.g. "1 serving = 30 g"). The table lists everything for that day with its servings, the amount those servings come to (e.g. "45 g"), then fat, carbs, protein, fiber and calories. Change the servings, or select rows and press Delete. The day's totals sit underneath as a row of boxed tiles, the same as on the Home page.
+1. **Daily log**: pick a day (with ‹ and › buttons for the previous and next day). Narrow the list with the **Category** and **Sub-category** boxes, search for a food or recipe, enter how many servings you ate and press **Add**. Recipes have their own "Recipes" entry in Category. A small note next to the box shows what one serving is (e.g. "1 serving = 30 g"). The table lists everything for that day with its servings, the amount those servings come to (e.g. "45 g"), then fat, carbs, protein, fiber and calories. Change the servings, or select rows and press Delete. The day's totals sit underneath as a row of boxed tiles, the same as on the Home page. Below the log, a **Macros over time** card (with a **Show** switch to fold it away) charts calories (or fat, carbs, protein or fiber) per day with a rolling average. It defaults to the last 3 months and a 7-day average; you can pick another period or your own dates, change the window, and turn either line off. Days you logged nothing are left out rather than counted as zero. Hovering shows that day's total and average together. It is the same chart as on the Home page (see [Charts over time](charts.md)), and only shows saved entries.
 2. **Recipes**: choose a recipe or create one with **New recipe** (name, how many servings it makes, and what one serving is called, e.g. "bowl"). You see its macros per serving, an ingredients table that works like the daily log (with the same filters, foods only, and the whole-recipe **Total** row under the table), and the instructions. **Edit recipe details** changes the name, yield and instructions, or deletes the recipe. These save straight away.
 3. **Foods**: your own food list, filterable by category and searchable by name. The table is read-only. Press **Edit** on a row to open the **Edit food** pop-up, filled in with that food: name, category, serving size and unit, and the macros for one serving. **Save** writes the change straight away, **Cancel** (or the X) closes without saving. To remove the food, tick **Yes, remove this food** and press **Delete food**. **Add food** (next to the filters) opens the same pop-up, empty, as **Add food**, with the unit set to g and the macros to 0. If something is wrong (no name, no category, a name you already use...), the error shows in the pop-up and it stays open.
    - **Your own categories.** The Category box lists sub-categories (e.g. "Protein › Poultry"), because every food sits in one. The last choice, **+ New category**, shows two more boxes: **Put it under** (any top-level category, or **+ New top-level category** with a box for its name) and **Sub-category name**. Save creates the category (and the new top-level one) together with the food. If the food can't be saved, the new category isn't kept either.
@@ -170,6 +170,16 @@ Amounts are always shown in the food's own serving unit (g, oz, cup, tbsp, bar..
 
     A new top-level category must come with its first sub-category. Foods can only go in sub-categories, so an empty top-level one would be no use. If you later remove all its sub-categories, it stays listed (as "No sub-categories yet") so you can add one or remove it.
 21. **Deleting is a soft delete.** Removing a food, recipe or category sets `is_active = FALSE` (a removed category can be brought back by adding it again, see step 20). It disappears from your lists, but recipes and past days that used it keep their numbers. Log entries and ingredients are really deleted.
+22. **Macros over time** (Daily log tab). Below the save row, the shared chart from `charts.py` is drawn in a card with its own key prefix. When the card's Show switch is off, the chart and its query don't run. It reads saved entries only, so unsaved changes appear in it after Save changes. One macro is shown at a time, because calories and grams are on very different scales. Days with nothing logged have no row, so the rolling average covers logged days only. See [Charts over time](charts.md).
+    ```python
+    # Shared with the Home page (see charts.py). It shows saved entries
+    # only, so unsaved changes above appear here after Save changes.
+    charts.chart_card(
+        "Macros over time",
+        "nutrition_macros",
+        lambda key: charts.show_macros_over_time(user_id, key),
+    )
+    ```
 
 ## Widgets used
 - [st.tabs](widgets/st_tabs.md): the Daily log, Recipes and Foods tabs
@@ -178,8 +188,13 @@ Amounts are always shown in the food's own serving unit (g, oz, cup, tbsp, bar..
 - [st.dialog](widgets/st_dialog.md): the Add food and Edit food pop-ups, and the Manage categories pop-up
 - [st.checkbox](widgets/st_checkbox.md): confirming a food delete or a category removal
 - [st.selectbox](widgets/st_selectbox.md): the Category and Sub-category filters, picking a food, recipe or category, "Put it under" for a new category, and the category to rename or remove
-- [st.number_input](widgets/st_number_input.md): servings to add, a recipe's number of servings, and a food's serving size and macros
-- [st.date_input](widgets/st_date_input.md): the day being logged
+- [st.number_input](widgets/st_number_input.md): servings to add, a recipe's number of servings, a food's serving size and macros, and the chart's rolling-average days
+- [st.date_input](widgets/st_date_input.md): the day being logged, and the custom date range of the Macros over time chart
+- [st.segmented_control](widgets/st_segmented_control.md): the macro to chart and its time period
+- [st.pills](widgets/st_pills.md): turns the daily total and average lines on or off
+- [st.altair_chart](widgets/st_altair_chart.md): the Macros over time chart
+- [st.fragment](widgets/st_fragment.md): reruns only the Macros over time chart when its controls change
+- [st.toggle](widgets/st_toggle.md): the Show switch on the Macros over time card
 - [st.button](widgets/st_button.md): Add, previous/next day, Save changes, Revert changes, confirming a recipe delete, Add food, Manage categories, Save, Cancel and Delete food in the food pop-up, and Add category, Rename, Remove category and Done in the Manage categories pop-up
 - [st.text_input](widgets/st_text_input.md): recipe name, serving label, food search, food name, and category names
 - [st.text_area](widgets/st_text_area.md): recipe instructions
@@ -187,7 +202,7 @@ Amounts are always shown in the food's own serving unit (g, oz, cup, tbsp, bar..
 - [st.metric](widgets/st_metric.md): the day's totals in the Daily log, and a recipe's macros per serving
 - [st.form / st.form_submit_button](widgets/st_form.md): the New recipe and recipe details forms (the food pop-up is not a form, see step 15)
 - [st.popover](widgets/st_popover.md): the New recipe form and the delete confirmation
-- [st.container / st.columns / st.expander / st.divider](widgets/st_layout.md): the filter, add and save rows, the Edit recipe details section, the line above Delete food, the box around the new-category fields, and the Built-in categories expander
+- [st.container / st.columns / st.expander / st.divider](widgets/st_layout.md): the bordered Macros over time card, the filter, add and save rows, the Edit recipe details section, the line above Delete food, the box around the new-category fields, and the Built-in categories expander
 - [st.title / st.subheader / st.caption](widgets/st_title.md): headings, hints, the "1 serving = ..." note and the unsaved-changes count
 - [st.info / st.warning / st.error / st.success](widgets/st_status_messages.md): empty states, unsaved changes on other days, errors and save messages
 
@@ -195,6 +210,15 @@ Amounts are always shown in the food's own serving unit (g, oz, cup, tbsp, bar..
 - `get_log`, `save_log_changes` (`src/adamfit/food_logs.py`): read one day's log, and save a batch of adds, servings changes and deletes in one transaction. Raises `ValueError` if a number is too large.
   ```python
   food_logs.save_log_changes(user_id, log_date, adds, changes["updates"], changes["deletes"])
+  ```
+- `get_daily_totals` (`src/adamfit/food_logs.py`): one row per logged day with the summed macros (each entry's per-serving macros × servings, foods and recipes both included), for the Macros over time chart.
+- `chart_card` and `show_macros_over_time` (`src/adamfit/charts.py`): the card with a Show switch, and the Macros over time chart with its controls, shared with the Home page.
+  ```python
+  charts.chart_card(
+      "Macros over time",
+      "nutrition_macros",
+      lambda key: charts.show_macros_over_time(user_id, key),
+  )
   ```
 - `get_recipes`, `get_recipe`, `create_recipe`, `update_recipe`, `delete_recipe` (`src/adamfit/recipes.py`): manage recipes. Create and update raise `ValueError` if the name is taken.
   ```python

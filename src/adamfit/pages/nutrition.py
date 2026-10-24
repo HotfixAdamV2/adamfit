@@ -4,7 +4,7 @@ from datetime import date, timedelta
 
 import streamlit as st
 
-from adamfit import auth, food_logs, foods, recipes
+from adamfit import auth, charts, food_logs, foods, recipes
 from adamfit.nutrition import MACROS, scale_entries, totals_row
 from adamfit.ui import (
     apply_changes,
@@ -172,6 +172,14 @@ if log_tab.open:
                 flash(saved_message(count_changes(changes), "the log"))
                 del st.session_state[changes_key]
                 st.rerun()
+
+        # Shared with the Home page (see charts.py). It shows saved entries
+        # only, so unsaved changes above appear here after Save changes.
+        charts.chart_card(
+            "Macros over time",
+            "nutrition_macros",
+            lambda key: charts.show_macros_over_time(user_id, key),
+        )
 
 # ---- Recipes -----------------------------------------------------------
 if recipe_tab.open:

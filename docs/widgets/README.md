@@ -14,11 +14,13 @@ Short explanations of the Streamlit widgets and elements used in AdamFit. Page d
 | [st.button](st_button.md) | A clickable button |
 | [st.link_button](st_link_button.md) | Button that opens a web address in a new tab |
 | [st.checkbox](st_checkbox.md) | Tick box |
+| [st.toggle](st_toggle.md) | On/off switch |
 | [st.text_input](st_text_input.md) | Single-line text box |
 | [st.number_input](st_number_input.md) | Number box with +/- buttons |
 | [st.date_input](st_date_input.md) | Calendar date picker |
 | [st.selectbox](st_selectbox.md) | Dropdown, pick one |
 | [st.segmented_control](st_segmented_control.md) | Row of toggle buttons |
+| [st.pills](st_pills.md) | Row of pill buttons, pick one or several |
 | [st.metric](st_metric.md) | Big number with a change indicator |
 | [st.text_area](st_text_area.md) | Multi-line text box |
 | [st.markdown](st_markdown.md) | Formatted text (bold, lists, links) |
@@ -28,4 +30,5 @@ Short explanations of the Streamlit widgets and elements used in AdamFit. Page d
 | [st.tabs](st_tabs.md) | Content split into tabs |
 | [st.popover](st_popover.md) | Button that opens a small panel |
 | [st.dialog](st_dialog.md) | Pop-up window drawn by a function |
+| [st.fragment](st_fragment.md) | Part of a page that reruns on its own |
 | [st.columns / st.container / st.expander / st.divider / st.sidebar](st_layout.md) | Page layout |

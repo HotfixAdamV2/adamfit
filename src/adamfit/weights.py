@@ -134,31 +134,3 @@ def get_weights(user_id: int) -> pd.DataFrame:
     df["weight_kg"] = df["weight_kg"].astype(float)
     return df
 
-
-def add_rolling_average(df: pd.DataFrame, value_column: str, window_days: int) -> pd.DataFrame:
-    """
-    Add a time-based rolling average column.
-
-    The window covers calendar days, not number of entries, so skipped days
-    are handled correctly: a 7-day average on any date is the mean of all
-    weigh-ins in the 7 days ending on that date.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Must contain a ``weigh_date`` datetime column, sorted oldest first.
-    value_column : str
-        Name of the column to average.
-    window_days : int
-        Size of the window in days.
-
-    Returns
-    -------
-    pd.DataFrame
-        A copy of ``df`` with an added ``rolling_avg`` column.
-    """
-    out = df.copy()
-    out["rolling_avg"] = (
-        out.set_index("weigh_date")[value_column].rolling(f"{window_days}D").mean().to_numpy()
-    )
-    return out
