@@ -14,7 +14,9 @@ Below that are two tabs:
      - *Not set up*: a note pointing to [Google Health setup](google_health_setup.md) when the `GOOGLE_HEALTH_*` settings are missing from `.env`.
      - *Not connected*: a **Connect Google Health** button that opens Google in a new tab, and a **Refresh status** button to press when you come back.
      - *Connected*: when you connected and last synced, a start and end date (both included), **Sync now**, and **Disconnect**.
-   - **Weight over time**: current weight, rolling average and change for the chosen period, a line chart of weigh-ins plus the rolling average, and a table of the entries with where each came from (**Manual** or **Fitbit**).
+   - **Weight over time**: current weight, rolling average and change for the chosen period, a line chart of weigh-ins plus the rolling average, and a table of the entries with where each came from (**Manual** or **Fitbit**). The period can be a preset (1M to All) or a custom date range, and either line can be turned off. Hovering shows that day's weigh-in and average together. It is the same chart as on the Home page (see [Charts over time](charts.md)).
+   - **Weight change**: how much you gained or lost per day, week or month, based on the rolling average, the weigh-ins, or both. Show it as bars (orange gain, blue loss) or lines, with the % change as dashed light green lines on a right-hand axis (the **% change** switch, on at first).
+   - Both charts sit in cards with a **Show** switch, which remembers its setting for your session.
 
 ## How it works
 1. The logged-in user is loaded, and their unit preference decides how everything on the page is shown. The database always stores kilograms and centimetres. Conversion happens only for display (see `src/adamfit/units.py`).
@@ -93,53 +95,65 @@ Below that are two tabs:
        st.error(str(exc))
    ```
    The start date defaults to the day of the last sync (or 30 days ago), and the end date to today.
-8. **Weight over time.** With no weigh-ins yet, an info box is shown instead of the chart. Otherwise `show_weight_over_time` draws the rest of the section.
+8. **Chart cards.** With no weigh-ins yet, an info box is shown instead of the charts. Otherwise two cards from `charts.py` are drawn: **Weight over time** and, under it, **Weight change**. Each has a **Show** switch, and a hidden card's code doesn't run. The key prefixes keep these widgets apart from the Home page's.
    ```python
-   st.subheader("Weight over time")
    if df.empty:
-       st.info("No weigh-ins yet. Log one above to see your chart.")
+       st.info("No weigh-ins yet. Log one above to see your charts.")
    else:
-       show_weight_over_time(df)
+       # Each card has a Show toggle; a hidden card's code doesn't run
+       charts.chart_card("Weight over time", "profile_weight", lambda key: show_weight_over_time(df, key))
+       charts.chart_card(
+           "Weight change",
+           "profile_weight_change",
+           lambda key: charts.show_weight_change(df, unit, key),
+       )
    ```
-9. **Chart controls.** You pick a period (default 3 months) and a rolling-average window in days (default 7).
+9. **Chart controls.** The controls come from `charts.py`, shared with the Home page (see [Charts over time](charts.md)). You pick a period (default 3 months, or **Custom** for your own date range), a rolling-average window in days (default 7), and which lines to show. The controls sit *under* the chart, but the metrics and chart depend on them, so a container is reserved for those first and filled once the controls have been read.
    ```python
-   period = col_period.segmented_control("Time period", list(PERIODS), default="3M", required=True)
-   window_days = col_window.number_input("Rolling average (days)", min_value=1, max_value=90, value=7, step=1)
+   metrics_and_chart = st.container()
+   settings = charts.chart_controls(key, charts.WEIGHT_LINES)
    ```
-10. **Rolling average.** It is calculated over your *whole* history first, then trimmed to the period. That way the first point on a 3-month chart still averages the days before it.
+10. **Rolling average.** It is calculated over your *whole* history first, then trimmed to the chosen dates. That way the first point on a 3-month chart still averages the days before it.
    ```python
-   df = weights.add_rolling_average(df, "weight", window_days)
-   view = df[df["weigh_date"] >= pd.Timestamp(date.today() - timedelta(days=days_back))]
+   df = charts.add_rolling_average(df, "weigh_date", "weight", settings.window_days)
+   view = charts.filter_dates(df, "weigh_date", settings.start, settings.end)
    ```
-11. **Metrics and chart.** Two Altair line charts (thin with dots for weigh-ins, thick for the average) are layered with `+`.
+11. **Metrics and chart.** Current weight, the rolling average and the change over the period sit above the shared chart: a thin line with dots for weigh-ins and a bold one for the average, with `YYYY-MM-DD` dates. Hovering shows one tooltip with that day's weigh-in and average. If the chosen period has no weigh-ins, `weight_chart` shows an info box and the function returns before the entries table. A `return` is used instead of `st.stop()`, which would end the whole page run.
    ```python
-   weigh_ins = base.transform_filter(alt.datum.series == "Weigh-in").mark_line(point=True, opacity=0.5)
-   average = base.transform_filter(alt.datum.series == avg_label).mark_line(strokeWidth=3)
-   st.altair_chart(weigh_ins + average)
+   with metrics_and_chart:
+       ...
+       charts.weight_chart(view, unit, settings)
+
+   if view.empty:
+       return
    ```
-   If the chosen period has no weigh-ins, an info box is shown and the function returns early, so no chart is drawn. A `return` is used instead of `st.stop()`, which would end the whole page run.
+   `show_weight_over_time` is a fragment (`@st.fragment`), so changing a chart control reruns only this section.
+12. **Weight change.** `show_weight_change` draws the change per day, week (Monday to Sunday) or month, as bars or lines. Each value compares the period's last weigh-in (or last rolling average) with the previous period that has data. The % change (change ÷ previous value × 100) goes on a right-hand axis whose zero lines up with the left one. See [Charts over time](charts.md#how-it-works) for the maths and how gaps are handled.
 
 ## Widgets used
 - [st.title / st.subheader / st.caption](widgets/st_title.md): page and section headings, hints
-- [st.segmented_control](widgets/st_segmented_control.md): units toggle (saved via `on_change`) and chart period
+- [st.segmented_control](widgets/st_segmented_control.md): units toggle (saved via `on_change`), chart period, and Daily / Weekly / Monthly and Bars / Lines for the weight change
+- [st.pills](widgets/st_pills.md): turns the weigh-in and average lines on or off, and picks what the weight change is based on
+- [st.toggle](widgets/st_toggle.md): the Show switch on each chart card, and the weight change chart's % change switch
+- [st.fragment](widgets/st_fragment.md): reruns only the Weight over time section when a chart control changes
 - [st.form / st.form_submit_button](widgets/st_form.md): body details, weight entry, and the sync dates
 - [st.selectbox](widgets/st_selectbox.md): sex, and the date to delete
 - [st.number_input](widgets/st_number_input.md): height, weight and rolling-average days
-- [st.date_input](widgets/st_date_input.md): birth date, weigh-in date, and the sync start and end dates
+- [st.date_input](widgets/st_date_input.md): birth date, weigh-in date, the sync start and end dates, and the chart's custom date range
 - [st.button](widgets/st_button.md): delete an entry, Refresh status, and Disconnect
 - [st.link_button](widgets/st_link_button.md): Connect Google Health, opening Google in a new tab
 - [st.spinner](widgets/st_spinner.md): shown while weigh-ins are fetched from Google Health
 - [st.metric](widgets/st_metric.md): current weight, average and change
-- [st.altair_chart](widgets/st_altair_chart.md): the weight chart
+- [st.altair_chart](widgets/st_altair_chart.md): the weight chart and the weight change bars
 - [st.dataframe](widgets/st_dataframe.md): entries table (date, weight, source), using `column_config`
 - [st.tabs](widgets/st_tabs.md): the Body details and Weight tabs, running only the open one
 - [st.columns / st.container / st.expander](widgets/st_layout.md): side-by-side inputs, the Connect / Refresh status row, and collapsible sections
 - [st.success / st.error / st.info](widgets/st_status_messages.md): save and sync confirmations, Google Health errors, and empty-state notes
 
 ## Core functions
-- `show_weight_over_time` (`src/adamfit/pages/profile.py`): draws the chart controls, metrics, chart and entries table for the weigh-ins.
+- `show_weight_over_time` (`src/adamfit/pages/profile.py`): draws the chart controls, metrics, chart and entries table for the weigh-ins, using the shared pieces in `charts.py`.
   ```python
-  show_weight_over_time(df)
+  charts.chart_card("Weight over time", "profile_weight", lambda key: show_weight_over_time(df, key))
   ```
 - `show_google_health_sync` / `connect_url` (`src/adamfit/pages/profile.py`): draw the sync section, and make (or reuse) the Google login link.
 - `is_configured`, `build_auth_url`, `sync_weights`, `disconnect` (`src/adamfit/google_health.py`): check `.env` has the settings, make a login link, download and save weigh-ins, and disconnect. Errors are `GoogleHealthError` subclasses with a message for the user.
@@ -157,9 +171,11 @@ Below that are two tabs:
 - `save_weight` (`src/adamfit/weights.py`): inserts a weigh-in, or replaces the one for that date (`ON CONFLICT ... DO UPDATE`), and marks it `manual`.
 - `save_synced_weights` (`src/adamfit/weights.py`): saves synced weigh-ins (one per day) in one transaction, overwriting any stored value for those days and marking them `google_health`.
 - `delete_weight` (`src/adamfit/weights.py`): removes the weigh-in for one date.
-- `add_rolling_average` (`src/adamfit/weights.py`): adds a `rolling_avg` column averaging the last *N calendar days*, so skipped days are handled correctly.
+- `chart_card` (`src/adamfit/charts.py`): the bordered card with a heading and a Show switch around each chart.
+- `show_weight_change` (`src/adamfit/charts.py`): the weight change card's chart and controls.
+- `chart_controls`, `add_rolling_average`, `filter_dates`, `weight_chart` (`src/adamfit/charts.py`): the shared chart controls, the rolling average over the last *N calendar days* (so skipped days are handled correctly), trimming to the chosen dates, and the chart. See [Charts over time](charts.md).
   ```python
-  df = weights.add_rolling_average(df, "weight", 7)
+  df = charts.add_rolling_average(df, "weigh_date", "weight", 7)
   ```
 - `to_display_weight` / `from_display_weight`, `cm_to_ft_in` / `ft_in_to_cm` (`src/adamfit/units.py`): unit conversions.
 - `flash` / `show_flash` (`src/adamfit/ui.py`): show a success (or, with `kind="error"`, an error) message after `st.rerun()`.

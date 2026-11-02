@@ -2,11 +2,10 @@
 
 from datetime import date, datetime, timedelta
 
-import altair as alt
 import pandas as pd
 import streamlit as st
 
-from adamfit import auth, google_health, google_health_connection, users, weights
+from adamfit import auth, charts, google_health, google_health_connection, users, weights
 from adamfit.ui import flash, show_flash
 from adamfit.units import (
     cm_to_ft_in,
@@ -16,8 +15,6 @@ from adamfit.units import (
     weight_label,
 )
 
-# Chart period choices and how many days back each one shows (None = all)
-PERIODS = {"1M": 30, "3M": 91, "6M": 182, "1Y": 365, "All": None}
 UNIT_LABELS = {"imperial": "Pounds (lb, ft/in)", "metric": "Kilograms (kg, cm)"}
 MAX_WEIGHT_KG = 699.0
 # The Google login link is cached here, and remade before its 10-minute state expires
@@ -52,79 +49,56 @@ st.segmented_control(
 )
 
 
-def show_weight_over_time(df: pd.DataFrame) -> None:
+@st.fragment
+def show_weight_over_time(df: pd.DataFrame, key: str) -> None:
     """
-    Draw the chart controls, metrics, chart and entries table for the weigh-ins.
+    Draw the metrics, chart, chart controls and entries table for the weigh-ins.
 
-    This is a function so it can ``return`` early when the chosen period
-    has no weigh-ins. ``st.stop()`` would also cut off anything drawn after
-    it on the page, which is fragile inside a tab.
+    The controls and the chart come from ``charts.py``, shared with the Home
+    page. The controls sit under the chart, but the metrics and the chart
+    above them depend on them, so a container is reserved for those first
+    and filled once the controls have been read. This is a fragment, so
+    changing a control reruns only this section. It is also a function so
+    it can ``return`` early when the chosen period has no weigh-ins.
+    ``st.stop()`` would also cut off anything drawn after it on the page,
+    which is fragile inside a tab.
 
     Parameters
     ----------
     df : pd.DataFrame
         All of the user's weigh-ins, oldest first, with a ``weight`` column
         already converted to the display unit. Must not be empty.
+    key : str
+        Prefix for the widget keys, passed in by ``charts.chart_card``.
     """
-    col_period, col_window = st.columns([3, 2])
-    period = col_period.segmented_control("Time period", list(PERIODS), default="3M", required=True)
-    window_days = col_window.number_input(
-        "Rolling average (days)", min_value=1, max_value=90, value=7, step=1
-    )
+    metrics_and_chart = st.container()
+    settings = charts.chart_controls(key, charts.WEIGHT_LINES)
 
     # Average over the full history first, so the start of the chart is accurate
-    df = weights.add_rolling_average(df, "weight", window_days)
-    days_back = PERIODS[period]
-    if days_back is None:
-        view = df
-    else:
-        view = df[df["weigh_date"] >= pd.Timestamp(date.today() - timedelta(days=days_back))]
+    df = charts.add_rolling_average(df, "weigh_date", "weight", settings.window_days)
+    view = charts.filter_dates(df, "weigh_date", settings.start, settings.end)
 
-    latest = df.iloc[-1]
-    previous_weight = df["weight"].iloc[-2] if len(df) > 1 else None
-    col_current, col_avg, col_change = st.columns(3)
-    col_current.metric(
-        "Current weight",
-        f"{latest['weight']:.1f} {unit}",
-        delta=f"{latest['weight'] - previous_weight:+.1f} {unit}" if previous_weight is not None else None,
-        delta_color="off",
-        help=f"Most recent weigh-in ({latest['weigh_date']:%b %d, %Y}), compared with the one before.",
-    )
-    col_avg.metric(f"{window_days}-day average", f"{latest['rolling_avg']:.1f} {unit}")
-    if len(view) > 1:
-        col_change.metric(
-            f"Change ({period})",
-            f"{view['weight'].iloc[-1] - view['weight'].iloc[0]:+.1f} {unit}",
+    with metrics_and_chart:
+        latest = df.iloc[-1]
+        previous_weight = df["weight"].iloc[-2] if len(df) > 1 else None
+        col_current, col_avg, col_change = st.columns(3)
+        col_current.metric(
+            "Current weight",
+            f"{latest['weight']:.1f} {unit}",
+            delta=f"{latest['weight'] - previous_weight:+.1f} {unit}" if previous_weight is not None else None,
+            delta_color="off",
+            help=f"Most recent weigh-in ({latest['weigh_date']:%b %d, %Y}), compared with the one before.",
         )
+        col_avg.metric(f"{settings.window_days}-day average", f"{latest['rolling_avg']:.1f} {unit}")
+        if len(view) > 1:
+            col_change.metric(
+                f"Change ({settings.period})",
+                f"{view['weight'].iloc[-1] - view['weight'].iloc[0]:+.1f} {unit}",
+            )
+        charts.weight_chart(view, unit, settings)
 
     if view.empty:
-        st.info("No weigh-ins in this time period. Try a longer one.")
         return
-
-    avg_label = f"{window_days}-day average"
-    long = view.melt(
-        id_vars="weigh_date",
-        value_vars=["weight", "rolling_avg"],
-        var_name="series",
-        value_name="value",
-    )
-    long["series"] = long["series"].map({"weight": "Weigh-in", "rolling_avg": avg_label})
-
-    base = alt.Chart(long).encode(
-        x=alt.X("weigh_date:T", title="Date"),
-        y=alt.Y("value:Q", title=f"Weight ({unit})", scale=alt.Scale(zero=False)),
-        color=alt.Color("series:N", title=None, legend=alt.Legend(orient="bottom")),
-        tooltip=[
-            alt.Tooltip("weigh_date:T", title="Date"),
-            alt.Tooltip("series:N", title="Series"),
-            alt.Tooltip("value:Q", title=unit, format=".1f"),
-        ],
-    )
-    weigh_ins = base.transform_filter(alt.datum.series == "Weigh-in").mark_line(
-        point=True, opacity=0.5
-    )
-    average = base.transform_filter(alt.datum.series == avg_label).mark_line(strokeWidth=3)
-    st.altair_chart(weigh_ins + average)
 
     with st.expander("Entries in this period"):
         entries = view[["weigh_date", "weight", "source"]].iloc[::-1]
@@ -325,8 +299,13 @@ if weight_tab.open:
         with st.expander("Google Health sync", icon=":material/sync:"):
             show_google_health_sync()
 
-        st.subheader("Weight over time")
         if df.empty:
-            st.info("No weigh-ins yet. Log one above to see your chart.")
+            st.info("No weigh-ins yet. Log one above to see your charts.")
         else:
-            show_weight_over_time(df)
+            # Each card has a Show toggle; a hidden card's code doesn't run
+            charts.chart_card("Weight over time", "profile_weight", lambda key: show_weight_over_time(df, key))
+            charts.chart_card(
+                "Weight change",
+                "profile_weight_change",
+                lambda key: charts.show_weight_change(df, unit, key),
+            )

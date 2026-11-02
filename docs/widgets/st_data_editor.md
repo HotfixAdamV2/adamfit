@@ -41,7 +41,7 @@ st.data_editor(
 | Column config | What it does |
 |---------------|--------------|
 | `st.column_config.TextColumn(label, max_chars=, required=, disabled=)` | Text cells |
-| `st.column_config.NumberColumn(label, min_value=, step=, format=, default=, disabled=)` | Number cells. `format="%.2f"` shows two decimals, `step=0.25` sets the +/- step |
+| `st.column_config.NumberColumn(label, min_value=, step=, format=, default=, disabled=)` | Number cells. `format="%.2f"` shows two decimals, `step` sets how many decimals a cell keeps (it rounds to that precision, not to a multiple of step; `step=0.01` keeps two) |
 | `st.column_config.SelectboxColumn(label, options=, format_func=, default=)` | A dropdown in each cell. `format_func` turns stored values (e.g. ids) into labels |
 
 `st.column_config.ButtonColumn` (a button on every row) also works in `st.data_editor`. See [st.dataframe](st_dataframe.md#a-button-on-every-row-buttoncolumn).

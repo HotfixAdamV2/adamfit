@@ -38,3 +38,4 @@ Pass a dictionary instead of a list to group pages under headings: `{"Me": [prof
 
 ## Used in
 - [App router (`app.py`)](../streamlit_basics.md#multipage-apps-and-the-router)
+- [Home page](../home_page.md): `st.page_link("pages/profile.py", ...)` in the reminder to log today's weight. The path is the same one given to `st.Page` in `app.py`

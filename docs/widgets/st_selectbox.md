@@ -29,5 +29,6 @@ sex = st.selectbox(
 Pass `index=None` to start with nothing selected. Users can type in the box to search the options.
 
 ## Used in
+- [Exercises page](../exercises_page.md): the equipment in the exercise pop-up, and the muscle group to rename or remove
 - [My Profile page](../profile_page.md)
 - [Nutrition page](../nutrition_page.md): searching foods and recipes, the Category and Sub-category filters above them (Sub-category is `disabled` until a category is picked, and the Category's `on_change` resets it), choosing a recipe, filtering the Foods tab by category, a food's category (starting empty with `index=None` for a new food, with a "+ New category" choice) and serving unit in the food pop-up, and in both pop-ups "Put it under" (a top-level category or "+ New top-level category") and the category to rename or remove

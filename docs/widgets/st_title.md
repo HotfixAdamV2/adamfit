@@ -20,8 +20,9 @@ st.title("Exercises")
 - `st.caption("...")`: small grey text for hints and notes. Inside a horizontal row, `width="content"` keeps it only as wide as its text (default `"stretch"`).
 
 ## Used in
-- [Home page](../home_page.md) (centred title and caption, using `text_alignment="center"`)
-- [Exercises page](../exercises_page.md)
+- [Home page](../home_page.md) (centred title and caption, using `text_alignment="center"`, and a subheader above each chart)
+- [Charts over time](../charts.md) (a subheader at the top of each chart card, and a caption while a custom range is half picked)
+- [Exercises page](../exercises_page.md) (also a subheader for the selected exercise, and captions for the row count and hints)
 - [Login page](../login_page.md) (also subheader and caption)
 - [My Profile page](../profile_page.md) (also subheader and caption)
 - [Nutrition page](../nutrition_page.md) (also subheader and caption, including `width="content"` captions in the add row and for the "3 unsaved changes" note)
