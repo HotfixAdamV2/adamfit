@@ -20,4 +20,5 @@ if st.button("Delete food", icon=":material/delete:", disabled=not confirm, key=
 | `disabled` | Grey out the box | `False` |
 
 ## Used in
+- [Exercises page](../exercises_page.md): Remove picture, and confirming the removal of an exercise or a muscle group (one key per group)
 - [Nutrition page](../nutrition_page.md): confirming a food delete in the Edit food pop-up, and confirming a category removal in the Manage categories pop-up (one key per category, so a tick doesn't carry over)

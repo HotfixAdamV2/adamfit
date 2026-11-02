@@ -21,9 +21,12 @@ Short explanations of the Streamlit widgets and elements used in AdamFit. Page d
 | [st.selectbox](st_selectbox.md) | Dropdown, pick one |
 | [st.segmented_control](st_segmented_control.md) | Row of toggle buttons |
 | [st.pills](st_pills.md) | Row of pill buttons, pick one or several |
+| [st.multiselect](st_multiselect.md) | Dropdown, pick several |
 | [st.metric](st_metric.md) | Big number with a change indicator |
 | [st.text_area](st_text_area.md) | Multi-line text box |
 | [st.markdown](st_markdown.md) | Formatted text (bold, lists, links) |
+| [st.file_uploader](st_file_uploader.md) | Box to upload a file |
+| [st.image](st_image.md) | Shows a picture |
 | [st.dataframe](st_dataframe.md) | Interactive table, plus `ButtonColumn` (a button per row) |
 | [st.data_editor](st_data_editor.md) | Editable table, plus `st.column_config` |
 | [st.altair_chart](st_altair_chart.md) | Charts (line, bar, ...) |

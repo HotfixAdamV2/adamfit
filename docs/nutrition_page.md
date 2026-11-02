@@ -4,7 +4,7 @@
 
 ## What you see
 Three tabs:
-1. **Daily log**: pick a day (with ‹ and › buttons for the previous and next day). Narrow the list with the **Category** and **Sub-category** boxes, search for a food or recipe, enter how many servings you ate and press **Add**. Recipes have their own "Recipes" entry in Category. A small note next to the box shows what one serving is (e.g. "1 serving = 30 g"). The table lists everything for that day with its servings, the amount those servings come to (e.g. "45 g"), then fat, carbs, protein, fiber and calories. Change the servings, or select rows and press Delete. The day's totals sit underneath as a row of boxed tiles, the same as on the Home page. Below the log, a **Macros over time** card (with a **Show** switch to fold it away) charts calories (or fat, carbs, protein or fiber) per day with a rolling average. It defaults to the last 3 months and a 7-day average; you can pick another period or your own dates, change the window, and turn either line off. Days you logged nothing are left out rather than counted as zero. Hovering shows that day's total and average together. It is the same chart as on the Home page (see [Charts over time](charts.md)), and only shows saved entries.
+1. **Daily log**: pick a day (with ‹ and › buttons for the previous and next day). Narrow the list with the **Category** and **Sub-category** boxes, search for a food or recipe, enter how many servings you ate and press **Add**. The Servings box takes a number (e.g. 0.2 of a serving of rice) or a sum using `+ - * /` and brackets, so if you weighed 4.2 oz of a food whose serving is 1.5 oz you can just type `4.2/1.5`. A sum shows its answer underneath ("= 2.8 servings"). Anything that is not a number above zero shows a red "Not a valid number" note and greys out **Add**. Servings are kept to 3 decimals. Recipes have their own "Recipes" entry in Category. A small note next to the box shows what one serving is (e.g. "1 serving = 30 g"). The table lists everything for that day with its servings, the amount those servings come to (e.g. "45 g"), then fat, carbs, protein, fiber and calories. Change the servings, or select rows and press Delete. The day's totals sit underneath as a row of boxed tiles, the same as on the Home page. Below the log, a **Macros over time** card (with a **Show** switch to fold it away) charts calories (or fat, carbs, protein or fiber) per day with a rolling average. It defaults to the last 3 months and a 7-day average; you can pick another period or your own dates, change the window, and turn either line off. Days you logged nothing are left out rather than counted as zero. Hovering shows that day's total and average together. It is the same chart as on the Home page (see [Charts over time](charts.md)), and only shows saved entries.
 2. **Recipes**: choose a recipe or create one with **New recipe** (name, how many servings it makes, and what one serving is called, e.g. "bowl"). You see its macros per serving, an ingredients table that works like the daily log (with the same filters, foods only, and the whole-recipe **Total** row under the table), and the instructions. **Edit recipe details** changes the name, yield and instructions, or deletes the recipe. These save straight away.
 3. **Foods**: your own food list, filterable by category and searchable by name. The table is read-only. Press **Edit** on a row to open the **Edit food** pop-up, filled in with that food: name, category, serving size and unit, and the macros for one serving. **Save** writes the change straight away, **Cancel** (or the X) closes without saving. To remove the food, tick **Yes, remove this food** and press **Delete food**. **Add food** (next to the filters) opens the same pop-up, empty, as **Add food**, with the unit set to g and the macros to 0. If something is wrong (no name, no category, a name you already use...), the error shows in the pop-up and it stays open.
    - **Your own categories.** The Category box lists sub-categories (e.g. "Protein › Poultry"), because every food sits in one. The last choice, **+ New category**, shows two more boxes: **Put it under** (any top-level category, or **+ New top-level category** with a box for its name) and **Sub-category name**. Save creates the category (and the new top-level one) together with the food. If the food can't be saved, the new category isn't kept either.
@@ -50,6 +50,17 @@ Amounts are always shown in the food's own serving unit (g, oz, cup, tbsp, bar..
    ]
    if st.session_state.get(item_key) is not None and st.session_state[item_key] not in visible:
        st.session_state[item_key] = None
+   ```
+
+   **Typing a sum for servings.** The Servings box is a `st.text_input`, not a number box, so it can hold text like `150*2/140`. `parse_servings` (in `nutrition.py`) works out the value. It does not use Python's `eval()`, which would run any code typed in. Instead `ast.parse` turns the text into a tree, and only numbers, `+ - * /`, a leading sign and brackets are allowed through (so `2**10` or `__import__('os')` are rejected). The result is rounded to 3 decimals, the scale of the `servings` columns (`NUMERIC(8, 3)`). The Add button's callback parses the text again and passes the number to `on_add`.
+   ```python
+   servings = parse_servings(text)
+   if servings is None:
+       st.caption(":red[Not a valid number]", width="content")
+   elif not _is_plain_number(text):
+       st.caption(f"= {servings:g} servings", width="content")
+   ...
+   st.button("Add", icon=":material/add:", type="primary", disabled=servings is None, on_click=_add)
    ```
 6. **Staging changes.** The page keeps a "changes" dictionary in `st.session_state`, one per day (`log_changes_2026-10-19`) or per recipe (`recipe_changes_12`). Add, servings edits and deletes only change that dictionary. A staged add has no database id yet, so it gets a temporary negative id (-1, -2...). Deleting a staged add just forgets it.
    ```python
@@ -188,7 +199,7 @@ Amounts are always shown in the food's own serving unit (g, oz, cup, tbsp, bar..
 - [st.dialog](widgets/st_dialog.md): the Add food and Edit food pop-ups, and the Manage categories pop-up
 - [st.checkbox](widgets/st_checkbox.md): confirming a food delete or a category removal
 - [st.selectbox](widgets/st_selectbox.md): the Category and Sub-category filters, picking a food, recipe or category, "Put it under" for a new category, and the category to rename or remove
-- [st.number_input](widgets/st_number_input.md): servings to add, a recipe's number of servings, a food's serving size and macros, and the chart's rolling-average days
+- [st.number_input](widgets/st_number_input.md): a recipe's number of servings, a food's serving size and macros, and the chart's rolling-average days
 - [st.date_input](widgets/st_date_input.md): the day being logged, and the custom date range of the Macros over time chart
 - [st.segmented_control](widgets/st_segmented_control.md): the macro to chart and its time period
 - [st.pills](widgets/st_pills.md): turns the daily total and average lines on or off
@@ -196,14 +207,14 @@ Amounts are always shown in the food's own serving unit (g, oz, cup, tbsp, bar..
 - [st.fragment](widgets/st_fragment.md): reruns only the Macros over time chart when its controls change
 - [st.toggle](widgets/st_toggle.md): the Show switch on the Macros over time card
 - [st.button](widgets/st_button.md): Add, previous/next day, Save changes, Revert changes, confirming a recipe delete, Add food, Manage categories, Save, Cancel and Delete food in the food pop-up, and Add category, Rename, Remove category and Done in the Manage categories pop-up
-- [st.text_input](widgets/st_text_input.md): recipe name, serving label, food search, food name, and category names
+- [st.text_input](widgets/st_text_input.md): servings to add (a number or a sum, with a `help` tooltip), recipe name, serving label, food search, food name, and category names
 - [st.text_area](widgets/st_text_area.md): recipe instructions
 - [st.markdown](widgets/st_markdown.md): shows the instructions, small bold headings, and the grouped list of your categories
 - [st.metric](widgets/st_metric.md): the day's totals in the Daily log, and a recipe's macros per serving
 - [st.form / st.form_submit_button](widgets/st_form.md): the New recipe and recipe details forms (the food pop-up is not a form, see step 15)
 - [st.popover](widgets/st_popover.md): the New recipe form and the delete confirmation
 - [st.container / st.columns / st.expander / st.divider](widgets/st_layout.md): the bordered Macros over time card, the filter, add and save rows, the Edit recipe details section, the line above Delete food, the box around the new-category fields, and the Built-in categories expander
-- [st.title / st.subheader / st.caption](widgets/st_title.md): headings, hints, the "1 serving = ..." note and the unsaved-changes count
+- [st.title / st.subheader / st.caption](widgets/st_title.md): headings, hints, the "1 serving = ..." note, the "= 2.8 servings" result or red "Not a valid number" note under the servings box, and the unsaved-changes count
 - [st.info / st.warning / st.error / st.success](widgets/st_status_messages.md): empty states, unsaved changes on other days, errors and save messages
 
 ## Core functions
@@ -263,7 +274,7 @@ Amounts are always shown in the food's own serving unit (g, oz, cup, tbsp, bar..
   st.button("Add category", icon=":material/add:", on_click=add_clicked, key="manage_add")
   show_category_message("add")
   ```
-- `scale_entries`, `totals_row`, `to_amount`, `format_amount` (`src/adamfit/nutrition.py`): the serving and macro maths.
+- `scale_entries`, `totals_row`, `to_amount`, `format_amount`, `parse_servings` (`src/adamfit/nutrition.py`): the serving and macro maths. `parse_servings` turns the servings text (e.g. `"4.2/1.5"`) into a number, or None if it is not valid.
   ```python
   totals = totals_row(scale_entries(ingredients)).iloc[0]
   ```

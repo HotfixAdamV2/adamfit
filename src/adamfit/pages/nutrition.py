@@ -203,7 +203,7 @@ if recipe_tab.open:
             with st.popover("New recipe", icon=":material/add:"):
                 with st.form("new_recipe_form", border=False):
                     new_name = st.text_input("Name", max_chars=100, placeholder="Chicken and rice")
-                    new_servings = st.number_input("Makes how many servings?", min_value=0.25, value=1.0, step=1.0)
+                    new_servings = st.number_input("Makes how many servings?", min_value=0.01, value=1.0, step=1.0)
                     new_label = st.text_input("What is one serving called?", value="serving", max_chars=30)
                     if st.form_submit_button("Create", type="primary"):
                         if not new_name.strip() or not new_label.strip():
@@ -298,7 +298,7 @@ if recipe_tab.open:
                     col_servings, col_label = st.columns(2)
                     new_servings_per_recipe = col_servings.number_input(
                         "Makes how many servings?",
-                        min_value=0.25,
+                        min_value=0.01,
                         value=servings_per_recipe,
                         step=1.0,
                     )

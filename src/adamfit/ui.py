@@ -5,7 +5,14 @@ from collections.abc import Callable
 import pandas as pd
 import streamlit as st
 
-from adamfit.nutrition import MACROS, scale_entries, to_amount, totals_row
+from adamfit.nutrition import (
+    MACROS,
+    MAX_SERVINGS_TEXT,
+    parse_servings,
+    scale_entries,
+    to_amount,
+    totals_row,
+)
 
 _FLASH_KEY = "_flash"
 
@@ -40,6 +47,51 @@ def show_flash() -> None:
         st.error(message)
     else:
         st.success(message)
+
+
+def set_dialog_message(key: str, section: str, kind: str, text: str) -> None:
+    """
+    Store a message for one section of a pop-up.
+
+    Buttons in a pop-up often do their work in ``on_click`` callbacks,
+    which run before the pop-up is drawn again. Anything they draw would be
+    lost, so they store the message here and the section shows it with
+    ``show_dialog_message``.
+
+    Parameters
+    ----------
+    key : str
+        Session state key for the pop-up's message, e.g.
+        ``"muscle_group_message"``.
+    section : str
+        Where to show it, e.g. ``"add"`` or ``"rename"``.
+    kind : str
+        ``"success"`` or ``"error"``.
+    text : str
+        The message.
+    """
+    st.session_state[key] = {"section": section, "kind": kind, "text": text}
+
+
+def show_dialog_message(key: str, section: str) -> None:
+    """
+    Show (once) the message stored by ``set_dialog_message``, if it belongs to this section.
+
+    Parameters
+    ----------
+    key : str
+        The same session state key passed to ``set_dialog_message``.
+    section : str
+        The section being drawn, e.g. ``"add"``.
+    """
+    message = st.session_state.get(key)
+    if message is None or message["section"] != section:
+        return
+    del st.session_state[key]
+    if message["kind"] == "error":
+        st.error(message["text"])
+    else:
+        st.success(message["text"])
 
 
 def macro_column_config() -> dict:
@@ -82,6 +134,24 @@ def macro_tiles(totals: pd.Series) -> None:
             st.metric(label, f"{value:,.0f}" if column == "calories" else f"{value:.1f}", border=True)
 
 
+def _is_plain_number(text: str) -> bool:
+    """
+    Check whether the text is just digits with at most one decimal point.
+
+    Parameters
+    ----------
+    text : str
+        Text typed in a Servings box.
+
+    Returns
+    -------
+    bool
+        True for text like ``"2"`` or ``"1.5"``, False for a sum like
+        ``"4.2/1.5"``.
+    """
+    return text.strip().replace(".", "", 1).isdigit()
+
+
 def item_picker(
     options: dict[str, dict],
     key: str,
@@ -96,8 +166,15 @@ def item_picker(
     only has choices once a category is picked. If the chosen item is
     filtered out, the item list is cleared. Once an item is chosen, a
     caption shows what one serving is (e.g. "1 serving = 30 g") and the
-    servings box starts at 1. When Add is clicked, ``on_add`` is called with
-    the chosen key and the number of servings, and the picker is cleared.
+    servings box starts at 1.
+
+    The servings box is a text box, so a sum can be typed instead of a
+    number, e.g. ``4.2/1.5`` for 4.2 oz of a 1.5 oz serving (see
+    ``nutrition.parse_servings``). A sum shows its result underneath (e.g.
+    "= 2.8 servings"). Anything that is not a valid amount above zero shows
+    a red note and greys out Add. When Add is clicked, ``on_add`` is called
+    with the chosen key and the number of servings as a float, and the
+    picker is cleared.
 
     Parameters
     ----------
@@ -122,8 +199,11 @@ def item_picker(
         Pass the chosen item to ``on_add``, then clear the picker.
         """
         choice = st.session_state.get(item_key)
-        servings = st.session_state.get(f"{key}_servings_{choice}")
-        if choice is None or not servings:
+        if choice is None:
+            return
+        # Parse again here: the box holds text such as "4.2/1.5"
+        servings = parse_servings(st.session_state.get(f"{key}_servings_{choice}", ""))
+        if servings is None:
             return
         on_add(choice, servings)
         st.session_state[item_key] = None
@@ -185,23 +265,29 @@ def item_picker(
             placeholder="Type to search..." if visible else "Nothing matches these filters",
             key=item_key,
         )
+        servings = None
         if choice is None:
-            st.number_input("Servings", value=None, disabled=True, width=150, key=f"{key}_servings_none")
+            st.text_input("Servings", disabled=True, width=150, key=f"{key}_servings_none")
         else:
             option = options[choice]
-            # A key per item resets the box to 1 serving when the item changes
-            st.number_input(
+            # A text box (not a number box) so a sum like 4.2/1.5 can be
+            # typed. A key per item resets it to 1 serving when the item changes.
+            text = st.text_input(
                 "Servings",
-                min_value=0.25,
-                value=1.0,
-                step=0.25,
-                format="%.2f",
+                value="1",
+                max_chars=MAX_SERVINGS_TEXT,
+                help="Type a number, or a sum such as `4.2/1.5` (what you ate ÷ the serving size).",
                 width=150,
                 key=f"{key}_servings_{choice}",
             )
+            servings = parse_servings(text)
+            if servings is None:
+                st.caption(":red[Not a valid number]", width="content")
+            elif not _is_plain_number(text):
+                st.caption(f"= {servings:g} servings", width="content")
             one_serving = to_amount(1, option["serving_size"])
             st.caption(f"1 serving = {one_serving:g} {option['serving_unit']}", width="content")
-        st.button("Add", icon=":material/add:", type="primary", disabled=choice is None, on_click=_add)
+        st.button("Add", icon=":material/add:", type="primary", disabled=servings is None, on_click=_add)
 
 
 # ---- Staged (unsaved) changes ------------------------------------------
@@ -469,8 +555,10 @@ def entries_editor(
     scaled = scale_entries(entries)
     column_config = {
         "item_name": st.column_config.TextColumn("Item", width="large", disabled=True),
+        # In a data editor, step also sets how many decimals a cell keeps,
+        # so 0.01 keeps two decimals and lets small amounts like 0.2 through.
         "servings": st.column_config.NumberColumn(
-            "Servings", min_value=0.25, step=0.25, format="%.2f", width="small", required=True
+            "Servings", min_value=0.01, step=0.01, format="%.2f", width="small", required=True
         ),
         "amount": st.column_config.TextColumn("Amount", width="small", disabled=True),
         **macro_column_config(),

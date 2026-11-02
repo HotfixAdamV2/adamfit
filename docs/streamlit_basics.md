@@ -109,7 +109,7 @@ We use `psycopg_pool.ConnectionPool`. Code borrows a connection with a `with` bl
 from adamfit.db import get_connection
 
 with get_connection() as conn:
-    conn.execute("UPDATE exercise SET muscle_group = %s WHERE exercise_id = %s", ("Back", 3))
+    conn.execute("UPDATE exercise SET equipment = %s WHERE exercise_id = %s", ("dumbbell", 3))
 ```
 
 When the block finishes normally the changes are **committed**. If an error occurs they are **rolled back**. Either way the connection returns to the pool. For plain reads, use `fetch_all(query, params)`, which does this for you.

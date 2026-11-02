@@ -22,5 +22,6 @@ By default every tab's code runs on every rerun, even the hidden ones. With `on_
 | `on_change` | `"ignore"` (no state tracking), `"rerun"`, or a callback function | `"ignore"` |
 
 ## Used in
+- [Exercises page](../exercises_page.md): a single Library tab for now, ready for more
 - [Nutrition page](../nutrition_page.md)
 - [My Profile page](../profile_page.md)

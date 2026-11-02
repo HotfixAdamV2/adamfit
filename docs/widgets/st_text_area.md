@@ -18,4 +18,5 @@ instructions = st.text_area("Instructions", value=recipe["instructions"] or "", 
 | `help` | Tooltip next to the label | None |
 
 ## Used in
+- [Exercises page](../exercises_page.md): exercise instructions (filled in through `st.session_state` instead of `value`)
 - [Nutrition page](../nutrition_page.md): recipe instructions

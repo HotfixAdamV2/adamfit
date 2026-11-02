@@ -48,4 +48,5 @@ Two more things to know:
 Only one pop-up can be open per run, and pop-ups can't be nested.
 
 ## Used in
+- [Exercises page](../exercises_page.md): the Add exercise and Edit exercise pop-ups (one form, two titles), and the Manage muscle groups pop-up
 - [Nutrition page](../nutrition_page.md): the Add food and Edit food pop-ups, and the Manage categories pop-up, in the Foods tab

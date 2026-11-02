@@ -59,6 +59,7 @@ with st.sidebar:
 ```
 
 ## Used in
+- [Exercises page](../exercises_page.md): a bordered details panel with `st.columns([3, 2])` (text left, picture right, stacking on narrow screens), horizontal containers for the button row, the filter rows and the pop-up rows, a closed "Built-in muscle groups" expander (with a lock `icon`), and dividers between pop-up sections
 - [App router (`app.py`)](../streamlit_basics.md#multipage-apps-and-the-router): sidebar
 - [Home page](../home_page.md): a horizontal container for the macro tiles (inside `ui.macro_tiles`), a bordered container around the weigh-in reminder, and the two-wide chart grid (`st.columns(2)` per row)
 - [Charts over time](../charts.md): a bordered card per chart (`height="stretch"` in the grid, so cards in a row are equally tall), a horizontal heading row, an empty `st.container()` reserving the chart's spot above its controls, and a horizontal container holding the rolling-average box and the pills

@@ -16,4 +16,5 @@ st.markdown(recipe["instructions"])   # "1. Cook the rice\n2. ..." becomes a num
 | `unsafe_allow_html` | Allow raw HTML. Avoid unless needed | `False` |
 
 ## Used in
+- [Exercises page](../exercises_page.md): `:blue-badge[...]` / `:gray-badge[...]` for the type and equipment, the muscle groups and the instructions in the details panel, section labels and the list of your own muscle groups in the Manage muscle groups pop-up
 - [Nutrition page](../nutrition_page.md): section labels, recipe instructions, and the grouped list of your own categories (with a grey `:gray[:material/lock: Built-in]` note) in the Manage categories pop-up

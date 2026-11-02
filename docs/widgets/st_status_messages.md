@@ -15,6 +15,7 @@ st.error(f"Could not connect to the database: {exc}")
 | `icon` | Emoji or icon shown at the left of the box | A default icon |
 
 ## Used in
+- [Exercises page](../exercises_page.md): save confirmations (with `flash`), validation and picture errors in the pop-ups, and "No exercises match these filters."
 - [Home page](../home_page.md): the "nothing logged today" note, and an `st.warning` (with a Material icon) when today's weight is missing
 - [Charts over time](../charts.md): notes when there is no data to chart, or no line is chosen
 - [Login page](../login_page.md): wrong password and database errors, and the result of connecting Google Health (success or error, shown with `flash`)

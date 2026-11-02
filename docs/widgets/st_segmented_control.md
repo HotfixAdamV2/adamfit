@@ -21,5 +21,6 @@ period = st.segmented_control("Time period", ["1M", "3M", "6M", "1Y", "All"], de
 | `persist_state` | `"session"` keeps the value for the whole session, even when the widget isn't drawn (e.g. its chart card is hidden) or you visit another page. Needs `key` | None |
 
 ## Used in
+- [Exercises page](../exercises_page.md): the Type filter (`selection_mode="multi"`, nothing picked means all types) and the exercise type in the pop-up (`required=True`)
 - [My Profile page](../profile_page.md): the units toggle and the chart time period
 - [Charts over time](../charts.md): the time period (1M to All, or Custom), which macro to show, Daily / Weekly / Monthly and Bars / Lines for the weight change, on the [Home page](../home_page.md) and [Nutrition page](../nutrition_page.md)
